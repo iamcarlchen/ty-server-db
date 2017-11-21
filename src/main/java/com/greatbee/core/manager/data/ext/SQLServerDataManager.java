@@ -52,6 +52,11 @@ public class SQLServerDataManager implements RelationalDataManager {
     }
 
     @Override
+    public void connect(OI oi, List<Field> list) throws DBException {
+
+    }
+
+    @Override
     public Data read(OI oi, List<Field> fields, Field pkField) throws DBException {
         return null;
     }
