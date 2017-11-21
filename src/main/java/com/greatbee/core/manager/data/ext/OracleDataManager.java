@@ -10,7 +10,9 @@ import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -21,6 +23,12 @@ import java.util.List;
  * Date: 2017/11/18
  */
 public class OracleDataManager implements RelationalDataManager {
+
+    /**
+     * dsManager 直接链接nvwa配置库,主要用于获取connection
+     */
+    @Autowired
+    private DSManager dsManager;
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
         return null;
