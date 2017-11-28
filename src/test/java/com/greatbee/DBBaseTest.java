@@ -21,8 +21,8 @@ public class DBBaseTest extends TestCase {
     /**
      * Set Up
      */
-    public void setUp() {
-        context = new ClassPathXmlApplicationContext(getServerConfigName());
+    public void setUp(String configName) {
+        context = new ClassPathXmlApplicationContext(configName);
     }
 
     /**

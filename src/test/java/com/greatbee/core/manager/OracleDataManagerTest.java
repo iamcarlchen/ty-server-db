@@ -15,7 +15,7 @@ public class OracleDataManagerTest extends DBBaseTest {
     private OracleDataManager oracleDataManager;
 
     public void setUp() {
-        super.setUp();
+        super.setUp("test_server_oracle.xml");
 
         oracleDataManager = (OracleDataManager) context.getBean("oracleDataManager");
     }
