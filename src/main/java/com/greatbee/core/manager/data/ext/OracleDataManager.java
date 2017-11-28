@@ -60,7 +60,88 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
     @Override
     public DataPage page(int page, int pageSize, ConnectorTree connectorTree) throws DBException {
-        return null;
+        if (connectorTree != null && connectorTree.getOi() != null) {
+            OI oi = connectorTree.getOi();
+            DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), this.dsManager);
+            if (_ds == null) {
+                throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
+            } else {
+                Connection conn = null;
+                PreparedStatement ps = null;
+                ResultSet rs = null;
+
+                DataPage result;
+                try {
+                    conn = _ds.getConnection();
+                    String buildAllSql = "SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM ("+ BuildUtils.buildAllSql(connectorTree);
+                    buildAllSql = buildAllSql + " ) \"TY_TABLE\" WHERE ROWNUM <= ?) WHERE \"TY_ROWNUM\" > ? ";
+                    logger.info("查询对象SQL：" + buildAllSql);
+                    ps = conn.prepareStatement(buildAllSql);
+                    int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+
+                    ps.setInt(index + 1, pageSize);
+                    ps.setInt(index, (page - 1) * pageSize);
+
+                    rs = ps.executeQuery();
+                    int count = this.count(connectorTree);
+                    System.out.println("总记录数：" + count);
+                    ArrayList list = new ArrayList();
+                    HashMap map = new HashMap();
+                    BuildUtils.buildAllFields(connectorTree, map);
+
+                    while (rs.next()) {
+                        Data dp = new Data();
+                        Iterator iterator = map.entrySet().iterator();
+
+                        while (iterator.hasNext()) {
+                            Map.Entry entry = (Map.Entry) iterator.next();
+                            String _dt = DT.String.getType();
+                            if (entry.getValue() != null) {
+                                _dt = ((Field) entry.getValue()).getDt();
+                            }
+
+                            if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
+                                dp.put(entry.getKey().toString(), Boolean.valueOf(rs.getBoolean((String) entry.getKey())));
+                            } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
+                                dp.put(entry.getKey().toString(), Double.valueOf(rs.getDouble((String) entry.getKey())));
+                            } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
+                                dp.put(entry.getKey().toString(), Integer.valueOf(rs.getInt((String) entry.getKey())));
+                            } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                Timestamp ts = rs.getTimestamp((String) entry.getKey());
+                                dp.put(entry.getKey().toString(), ts == null ? "" : sdf.format(ts));
+                            } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
+                                dp.put(entry.getKey().toString(), rs.getDate((String) entry.getKey()));
+                            } else {
+                                dp.put(entry.getKey().toString(), rs.getString((String) entry.getKey()));
+                            }
+                        }
+
+                        list.add(dp);
+                    }
+
+                    DataPage dataPage = new DataPage();
+                    dataPage.setCurrentPage(page);
+                    dataPage.setCurrentRecords(list);
+                    dataPage.setCurrentRecordsNum(list.size());
+                    dataPage.setPageSize(pageSize);
+                    dataPage.setTotalPages(count % pageSize > 0 ? count / pageSize + 1 : count / pageSize);
+                    dataPage.setTotalRecords(count);
+                    result = dataPage;
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+                } finally {
+                    _releaseRs(rs);
+                    _releaseConn(conn, ps);
+
+                }
+
+                return result;
+            }
+        } else {
+            throw new DBException("查询条件无效", ERROR_DB_CONT_IS_NULL);
+        }
     }
 
     @Override
@@ -123,15 +204,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     exception.printStackTrace();
                     throw new DBException(exception.getMessage(), ERROR_DB_SQL_EXCEPTION);
                 } finally {
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                            throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
-                        }
-                    }
-
+                    _releaseRs(rs);
                     _releaseConn(conn, ps);
 
                 }
@@ -171,14 +244,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     e.printStackTrace();
                     throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
                 } finally {
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                            throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
-                        }
-                    }
+                    _releaseRs(rs);
                     _releaseConn(conn, ps);
                 }
 
@@ -211,11 +277,11 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     }
 
                     String fieldName = field.getFieldName();
-                    sqlBuilder.append(" `").append(fieldName).append("` ");
+                    sqlBuilder.append(" ").append(fieldName).append(" ");
                 }
 
-                sqlBuilder.append(" FROM `").append(oi.getResource()).append("` ");
-                sqlBuilder.append(" WHERE `").append(pkField.getFieldName()).append("`=? ");
+                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=? ");
                 logger.info("读取对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParamPk(1, ps, pkField);
@@ -225,29 +291,29 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 label149:
                 while (true) {
                     if (rs.next()) {
-                        Iterator var26 = fields.iterator();
+                        Iterator iterator = fields.iterator();
 
                         while (true) {
-                            if (!var26.hasNext()) {
+                            if (!iterator.hasNext()) {
                                 continue label149;
                             }
 
-                            Field var27 = (Field) var26.next();
-                            String _dt = var27.getDt();
+                            Field field = (Field) iterator.next();
+                            String _dt = field.getDt();
                             if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                                resultData.put(var27.getFieldName(), Boolean.valueOf(rs.getBoolean(var27.getFieldName())));
+                                resultData.put(field.getFieldName(), Boolean.valueOf(rs.getBoolean(field.getFieldName())));
                             } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                                resultData.put(var27.getFieldName(), Double.valueOf(rs.getDouble(var27.getFieldName())));
+                                resultData.put(field.getFieldName(), Double.valueOf(rs.getDouble(field.getFieldName())));
                             } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                                resultData.put(var27.getFieldName(), Integer.valueOf(rs.getInt(var27.getFieldName())));
+                                resultData.put(field.getFieldName(), Integer.valueOf(rs.getInt(field.getFieldName())));
                             } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
                                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                                Timestamp ts = rs.getTimestamp(var27.getFieldName());
-                                resultData.put(var27.getFieldName(), ts == null ? "" : sdf.format(ts));
+                                Timestamp ts = rs.getTimestamp(field.getFieldName());
+                                resultData.put(field.getFieldName(), ts == null ? "" : sdf.format(ts));
                             } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                                resultData.put(var27.getFieldName(), rs.getDate(var27.getFieldName()));
+                                resultData.put(field.getFieldName(), rs.getDate(field.getFieldName()));
                             } else {
-                                resultData.put(var27.getFieldName(), rs.getString(var27.getFieldName()));
+                                resultData.put(field.getFieldName(), rs.getString(field.getFieldName()));
                             }
                         }
                     }
@@ -274,7 +340,94 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
     @Override
     public DataPage page(OI oi, List<Field> fields, int page, int pageSize, Condition condition) throws DBException {
-        return null;
+        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), this.dsManager);
+        if (_ds == null) {
+            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
+        } else {
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            DataPage result;
+            try {
+                conn = _ds.getConnection();
+                StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM (SELECT ");
+
+                int index;
+                for (index = 0; index < fields.size(); ++index) {
+                    Field count = (Field) fields.get(index);
+                    if (index > 0) {
+                        sqlBuilder.append(" , ");
+                    }
+
+                    String list = count.getFieldName();
+                    sqlBuilder.append(" ").append(list).append(" ");
+                }
+
+                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                if (condition != null) {
+                    sqlBuilder.append(" WHERE ");
+                    Condition.buildConditionSql(sqlBuilder, condition);
+                }
+
+                sqlBuilder.append(" ) \"TY_TABLE\" WHERE ROWNUM <= ?) WHERE \"TY_ROWNUM\" > ?");
+                logger.info("查询对象SQL：" + sqlBuilder.toString());
+                ps = conn.prepareStatement(sqlBuilder.toString());
+                index = Condition.buildConditionSqlPs(1, ps, condition);
+                ps.setInt(index + 1, pageSize);
+                ps.setInt(index, (page - 1) * pageSize);
+                rs = ps.executeQuery();
+                int totalCount = this._pageTotalCount(oi, condition);
+                System.out.println("总记录数：" + totalCount);
+                ArrayList resultList = new ArrayList();
+
+                while (rs.next()) {
+                    Data dp = new Data();
+                    Iterator iterator = fields.iterator();
+
+                    while (iterator.hasNext()) {
+                        Field field = (Field) iterator.next();
+                        String _dt = field.getDt();
+                        if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
+                            dp.put(field.getFieldName(), Boolean.valueOf(rs.getBoolean(field.getFieldName())));
+                        } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
+                            dp.put(field.getFieldName(), Double.valueOf(rs.getDouble(field.getFieldName())));
+                        } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
+                            dp.put(field.getFieldName(), Integer.valueOf(rs.getInt(field.getFieldName())));
+                        } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            Timestamp ts = rs.getTimestamp(field.getFieldName());
+                            dp.put(field.getFieldName(), ts == null ? "" : sdf.format(ts));
+                        } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
+                            dp.put(field.getFieldName(), rs.getDate(field.getFieldName()));
+                        } else {
+                            dp.put(field.getFieldName(), rs.getString(field.getFieldName()));
+                        }
+                    }
+
+                    resultList.add(dp);
+                }
+
+                DataPage dataPage = new DataPage();
+                dataPage.setCurrentPage(page);
+                dataPage.setCurrentRecords(resultList);
+                dataPage.setCurrentRecordsNum(resultList.size());
+                dataPage.setPageSize(pageSize);
+                dataPage.setTotalPages(totalCount % pageSize > 0 ? totalCount / pageSize + 1 : totalCount / pageSize);
+                dataPage.setTotalRecords(totalCount);
+                result = dataPage;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+            } finally {
+                _releaseRs(rs);
+
+                _releaseConn(conn, ps);
+
+            }
+
+            return result;
+        }
     }
 
     @Override
@@ -298,10 +451,10 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     }
 
                     String map = list.getFieldName();
-                    sqlBuilder.append(" `").append(map).append("` ");
+                    sqlBuilder.append(" ").append(map).append(" ");
                 }
 
-                sqlBuilder.append(" FROM `").append(oi.getResource()).append("` ");
+                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
                     Condition.buildConditionSql(sqlBuilder, condition);
@@ -346,14 +499,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
-                    }
-                }
+                _releaseRs(rs);
                 _releaseConn(conn, ps);
             }
         }
@@ -373,7 +519,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 StringBuilder sqlBuilder = new StringBuilder("DELETE FROM ");
                 sqlBuilder.append(oi.getResource()).append(" ");
                 ;
-                sqlBuilder.append(" WHERE `").append(pkField.getFieldName()).append("`=? ");
+                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=? ");
                 logger.info("删除对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParamPk(1, ps, pkField);
@@ -467,14 +613,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
-                    }
-                }
+                _releaseRs(rs);
                 _releaseConn(conn, ps);
             }
 
@@ -506,7 +645,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     _checkFieldLengthOverLimit(field);
                 }
 
-                sqlBuilder.append(" WHERE `").append(pkField.getFieldName()).append("`=").append(pkField.getFieldValue());
+                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=").append(pkField.getFieldValue());
                 logger.info("更新对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParam(1, ps, fields);
@@ -585,11 +724,60 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
         }
     }
 
+    private void _releaseRs(ResultSet rs) throws DBException {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
+            }
+        }
+    }
+
+    private int _pageTotalCount(OI oi, Condition condition) throws DBException {
+        int result = 0;
+        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), this.dsManager);
+        if (_ds == null) {
+            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
+        } else {
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            try {
+                conn = _ds.getConnection();
+                StringBuilder sqlBuilder = new StringBuilder("SELECT count(*) ");
+                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                if (condition != null) {
+                    sqlBuilder.append(" WHERE ");
+                    Condition.buildConditionSql(sqlBuilder, condition);
+                }
+
+                logger.info("查询对象SQL：" + sqlBuilder.toString());
+                ps = conn.prepareStatement(sqlBuilder.toString());
+                Condition.buildConditionSqlPs(1, ps, condition);
+
+                for (rs = ps.executeQuery(); rs.next(); result = rs.getInt(1)) {
+                    ;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+            } finally {
+                _releaseRs(rs);
+                _releaseConn(conn, ps);
+            }
+
+            return result;
+        }
+    }
+
 
     private static void _checkFieldLengthOverLimit(Field field) throws DBException {
         if (!DT.INT.getType().equals(field.getDt()) && (!DT.Boolean.getType().equals(field.getDt()) || field.getFieldValue() != null && !field.getFieldValue().equals("false") && !field.getFieldValue().equals("true"))) {
             if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength().intValue() > 0 && field.getFieldValue().length() > field.getFieldLength().intValue()) {
-                throw new DBException("字段值长度超过字段限制长度", 200003L);
+                throw new DBException("字段值长度超过字段限制长度", ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
             }
         }
     }
