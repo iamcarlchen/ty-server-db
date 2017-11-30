@@ -288,14 +288,12 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 rs = ps.executeQuery();
                 Data resultData = new Data();
 
-                label149:
                 while (true) {
                     if (rs.next()) {
                         Iterator iterator = fields.iterator();
-
                         while (true) {
                             if (!iterator.hasNext()) {
-                                continue label149;
+                                continue ;
                             }
 
                             Field field = (Field) iterator.next();
