@@ -212,5 +212,11 @@
             <artifactId>spring-data-redis</artifactId>
             <version>1.6.4.RELEASE</version>
         </dependency>
+        <!-- oracle -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.4</version>
+        </dependency>
     </dependencies>
 </project>

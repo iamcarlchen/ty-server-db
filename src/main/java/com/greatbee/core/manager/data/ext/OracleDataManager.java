@@ -15,6 +15,7 @@ import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
 import com.greatbee.core.manager.utils.BuildUtils;
@@ -43,7 +44,87 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
-        return null;
+        Connection conn = null;
+        DSView dsView = new DSView();
+
+        DSView tableName1;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            DatabaseMetaData metaData = conn.getMetaData();
+//            String schemaName = ds.getConnectionUrl().split(":")[ds.getConnectionUrl().split(":").length - 1];
+//            ResultSet rs = e.getTables((String) null, (String) null, "", new String[]{"TABLE"});
+            String schemaName = ds.getConnectionUsername().toUpperCase();
+            logger.info("exportFromPhysicsDS from " + schemaName);
+            ResultSet rs = metaData.getTables(conn.getCatalog(), schemaName.toUpperCase(), null, new String[]{"TABLE"});
+            dsView.setDs(ds);
+            ArrayList oiViews = new ArrayList();
+
+            while (rs.next()) {
+                System.out.println(rs.getString("TABLE_NAME"));
+                String tableName = rs.getString("TABLE_NAME");
+                OI objectIdentified = new OI();
+                objectIdentified.setName(tableName);
+                objectIdentified.setAlias(tableName);
+                objectIdentified.setResource(tableName);
+                objectIdentified.setDsAlias(ds.getAlias());
+                ResultSet columns = metaData.getColumns(conn.getCatalog(), schemaName.toUpperCase(), tableName, "%");
+                ResultSet pkCols = metaData.getPrimaryKeys((String) null, (String) null, tableName);
+                ArrayList pkColNames = new ArrayList();
+
+                while (pkCols.next()) {
+                    String fields = pkCols.getString("COLUMN_NAME");
+                    pkColNames.add(fields);
+                }
+
+                ArrayList fields1 = new ArrayList();
+
+                while (columns.next()) {
+                    Field oiView = new Field();
+                    String colName = columns.getString("COLUMN_NAME");
+                    int colSize = columns.getInt("COLUMN_SIZE");
+                    int dataType = columns.getInt("DATA_TYPE");
+                    String remarks = columns.getString("REMARKS");
+                    if (remarks == null || remarks.equals("")) {
+                        remarks = colName;
+                    }
+
+                    oiView.setName(colName);
+                    oiView.setDt(_transferMysqlTypeToTySqlType(dataType, colSize));
+                    oiView.setFieldName(colName);
+                    oiView.setOiAlias(objectIdentified.getAlias());
+                    oiView.setFieldLength(Integer.valueOf(colSize));
+                    oiView.setDescription(remarks);
+                    boolean isPk = false;
+                    Iterator iterator = pkColNames.iterator();
+
+                    while (iterator.hasNext()) {
+                        String str = (String) iterator.next();
+                        if (str != null && str.equals(colName)) {
+                            isPk = true;
+                            break;
+                        }
+                    }
+
+                    oiView.setPk(isPk);
+                    fields1.add(oiView);
+                }
+
+                OIView oiView1 = new OIView();
+                oiView1.setOi(objectIdentified);
+                oiView1.setFields(fields1);
+                oiViews.add(oiView1);
+            }
+
+            dsView.setOiViews(oiViews);
+            tableName1 = dsView;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this._releaseConn(conn);
+        }
+
+        return tableName1;
     }
 
     @Override
@@ -73,7 +154,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 DataPage result;
                 try {
                     conn = _ds.getConnection();
-                    String buildAllSql = "SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM ("+ BuildUtils.buildAllSql(connectorTree);
+                    String buildAllSql = "SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM (" + BuildUtils.buildAllSql(connectorTree);
                     buildAllSql = buildAllSql + " ) \"TY_TABLE\" WHERE ROWNUM <= ?) WHERE \"TY_ROWNUM\" > ? ";
                     logger.info("查询对象SQL：" + buildAllSql);
                     ps = conn.prepareStatement(buildAllSql);
@@ -293,7 +374,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                         Iterator iterator = fields.iterator();
                         while (true) {
                             if (!iterator.hasNext()) {
-                                continue ;
+                                continue;
                             }
 
                             Field field = (Field) iterator.next();
@@ -712,6 +793,10 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
             }
         }
 
+        this._releaseConn(conn);
+    }
+
+    private void _releaseConn(Connection conn) throws DBException {
         if (conn != null) {
             try {
                 conn.close();

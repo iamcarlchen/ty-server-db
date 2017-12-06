@@ -19,27 +19,27 @@
         <property name="password" value="${db.connection.password}"/>
     </bean>
 
-    <!--&lt;!&ndash;Hibernate Session Factory&ndash;&gt;-->
-    <!--<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">-->
-        <!--<property name="dataSource" ref="tyDS"/>-->
-        <!--<property name="mappingResources">-->
-            <!--<list>-->
-                <!--&lt;!&ndash;TY DB&ndash;&gt;-->
-                <!--<value>conf/ty_db.xml</value>-->
-            <!--</list>-->
-        <!--</property>-->
-        <!--<property name="hibernateProperties">-->
-            <!--<props>-->
-                <!--<prop key="hibernate.generate_statistics">${db.hibernate.generate_statistics}</prop>-->
-                <!--<prop key="hibernate.dialect">${db.hibernate.dialect}</prop>-->
-                <!--<prop key="hibernate.show_sql">${db.hibernate.show_sql}</prop>-->
-                <!--&lt;!&ndash;<prop key="hibernate.hbm2ddl.auto">${db.hibernate.hbm2ddl_auto}</prop>&ndash;&gt;-->
-                <!--<prop key="hibernate.cache.use_query_cache">false</prop>-->
-                <!--<prop key="hibernate.cache.use_second_level_cache">false</prop>-->
-                <!--&lt;!&ndash;<prop key="hibernate.cache.provider_class">${db.hibernate.cache.provider_class}</prop>&ndash;&gt;-->
-            <!--</props>-->
-        <!--</property>-->
-    <!--</bean>-->
+    <!--Hibernate Session Factory-->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="tyDS"/>
+        <property name="mappingResources">
+            <list>
+                <!--TY DB-->
+                <value>conf/ty_db.xml</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.generate_statistics">${db.hibernate.generate_statistics}</prop>
+                <prop key="hibernate.dialect">${db.hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${db.hibernate.show_sql}</prop>
+                <!--<prop key="hibernate.hbm2ddl.auto">${db.hibernate.hbm2ddl_auto}</prop>-->
+                <prop key="hibernate.cache.use_query_cache">false</prop>
+                <prop key="hibernate.cache.use_second_level_cache">false</prop>
+                <!--<prop key="hibernate.cache.provider_class">${db.hibernate.cache.provider_class}</prop>-->
+            </props>
+        </property>
+    </bean>
 
     <!--TY Server-->
     <import resource="classpath:conf/ty_server.xml"/>
