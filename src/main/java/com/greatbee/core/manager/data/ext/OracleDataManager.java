@@ -598,10 +598,9 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                StringBuilder sqlBuilder = new StringBuilder("DELETE FROM ");
-                sqlBuilder.append(oi.getResource()).append(" ");
-                ;
-                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=? ");
+                StringBuilder sqlBuilder = new StringBuilder("DELETE FROM \"");
+                sqlBuilder.append(oi.getResource()).append("\" ");
+                sqlBuilder.append(" WHERE \"").append(pkField.getFieldName()).append("\"=? ");
                 logger.info("删除对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParamPk(1, ps, pkField);

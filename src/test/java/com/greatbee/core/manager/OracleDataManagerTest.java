@@ -96,4 +96,25 @@ public class OracleDataManagerTest extends DBBaseTest {
     }
 
 
+    /**
+     * 测试通过主键删除数据
+     *
+     * @throws DBException
+     */
+    public void testDeleteByPK() throws DBException {
+        OIView oiView = getOIView();
+        Field pkField = null;
+        List<Field> fields = oiView.getFields();
+        for (Field field : fields) {
+            if (field.isPk()) {
+                pkField = field;
+                break;
+            }
+        }
+        pkField.setFieldValue("3");//设置主键值
+        oracleDataManager.delete(oiView.getOi(), pkField);
+
+    }
+
+
 }
