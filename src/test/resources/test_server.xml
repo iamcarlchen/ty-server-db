@@ -41,6 +41,10 @@
         </property>
     </bean>
 
+    <bean id="envConfig" class="com.greatbee.core.manager.data.config.EnvConfig">
+        <property name="test" value="true"/>
+    </bean>
+
     <!--TY Server-->
     <import resource="classpath:conf/ty_server.xml"/>
     <import resource="classpath:conf/ty_db_server.xml"/>

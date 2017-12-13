@@ -1,5 +1,6 @@
 package com.greatbee.core.manager.data.ext;
 
+import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
@@ -18,6 +19,7 @@ import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
+import com.greatbee.core.manager.data.util.LoggerUtil;
 import com.greatbee.core.manager.utils.BuildUtils;
 import com.greatbee.core.manager.utils.DataSourceUtils;
 import org.apache.log4j.Logger;
@@ -35,7 +37,8 @@ import java.util.*;
  * Date: 2017/11/18
  */
 public class OracleDataManager implements RelationalDataManager, ExceptionCode {
-    private static Logger logger = Logger.getLogger(OracleDataManager.class);
+    //    private static Logger logger = Logger.getLogger(OracleDataManager.class);
+    private LoggerUtil logger = new LoggerUtil(OracleDataManager.class);
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection
      */
@@ -49,6 +52,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
         DSView tableName1;
         try {
+            logger.info("get connection from " + JSONObject.toJSONString(ds));
             conn = DataSourceUtils.getDatasource(ds).getConnection();
             DatabaseMetaData metaData = conn.getMetaData();
 //            String schemaName = ds.getConnectionUrl().split(":")[ds.getConnectionUrl().split(":").length - 1];
@@ -358,11 +362,11 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     }
 
                     String fieldName = field.getFieldName();
-                    sqlBuilder.append(" ").append(fieldName).append(" ");
+                    sqlBuilder.append(" \"").append(fieldName).append("\" ");
                 }
 
-                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
-                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=? ");
+                sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
+                sqlBuilder.append(" WHERE \"").append(pkField.getFieldName()).append("\"=? ");
                 logger.info("读取对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParamPk(1, ps, pkField);
@@ -373,10 +377,6 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     if (rs.next()) {
                         Iterator iterator = fields.iterator();
                         while (true) {
-                            if (!iterator.hasNext()) {
-                                continue;
-                            }
-
                             Field field = (Field) iterator.next();
                             String _dt = field.getDt();
                             if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
@@ -393,6 +393,9 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                                 resultData.put(field.getFieldName(), rs.getDate(field.getFieldName()));
                             } else {
                                 resultData.put(field.getFieldName(), rs.getString(field.getFieldName()));
+                            }
+                            if (!iterator.hasNext()) {
+                                break;
                             }
                         }
                     }
