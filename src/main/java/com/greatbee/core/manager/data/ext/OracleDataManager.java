@@ -20,6 +20,8 @@ import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
 import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.greatbee.core.manager.data.util.OracleBuildUtils;
+import com.greatbee.core.manager.data.util.OracleConditionUtil;
 import com.greatbee.core.manager.utils.BuildUtils;
 import com.greatbee.core.manager.utils.DataSourceUtils;
 import org.apache.log4j.Logger;
@@ -243,14 +245,14 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
                 try {
                     conn = _ds.getConnection();
-                    String buildAllSql = BuildUtils.buildAllSql(connectorTree);
+                    String buildAllSql = OracleBuildUtils.buildAllSql(connectorTree);
                     logger.info("查询对象SQL：" + buildAllSql.toString());
                     ps = conn.prepareStatement(buildAllSql.toString());
-                    BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+                    OracleBuildUtils.buildTreeConditionPs(1, ps, connectorTree);
                     rs = ps.executeQuery();
                     ArrayList list = new ArrayList();
                     HashMap map = new HashMap();
-                    BuildUtils.buildAllFields(connectorTree, map);
+                    OracleBuildUtils.buildAllFields(connectorTree, map);
 
                     while (rs.next()) {
                         Data item = new Data();
@@ -315,12 +317,12 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 try {
                     conn = _ds.getConnection();
                     StringBuilder sqlBuilder = new StringBuilder("SELECT count(*) ");
-                    sqlBuilder.append(BuildUtils.buildConnector(connectorTree));
-                    sqlBuilder.append(BuildUtils.buildCondition(connectorTree));
-                    sqlBuilder.append(BuildUtils.buildGroupBy(connectorTree));
+                    sqlBuilder.append(OracleBuildUtils.buildConnector(connectorTree));
+                    sqlBuilder.append(OracleBuildUtils.buildCondition(connectorTree));
+                    sqlBuilder.append(OracleBuildUtils.buildGroupBy(connectorTree));
                     logger.info("查询对象SQL：" + sqlBuilder.toString());
                     ps = conn.prepareStatement(sqlBuilder.toString());
-                    BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+                    OracleBuildUtils.buildTreeConditionPs(1, ps, connectorTree);
 
                     for (rs = ps.executeQuery(); rs.next(); result = rs.getInt(1)) {
                         ;
@@ -626,11 +628,11 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                StringBuilder sqlBuilder = new StringBuilder("DELETE FROM ");
-                sqlBuilder.append(oi.getResource()).append(" ");
+                StringBuilder sqlBuilder = new StringBuilder("DELETE FROM \"");
+                sqlBuilder.append(oi.getResource()).append("\" ");
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
-                    Condition.buildConditionSql(sqlBuilder, condition);
+                    OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
                 }
 
                 logger.info("查询对象SQL：" + sqlBuilder.toString());
@@ -659,8 +661,8 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
             String result;
             try {
                 conn = _ds.getConnection();
-                StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ");
-                sqlBuilder.append(oi.getResource()).append("(");
+                StringBuilder sqlBuilder = new StringBuilder("INSERT INTO \"");
+                sqlBuilder.append(oi.getResource()).append("\" (");
                 StringBuilder valueStr = new StringBuilder();
 
                 int id;
@@ -671,7 +673,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                         valueStr.append(",");
                     }
 
-                    sqlBuilder.append(field.getFieldName());
+                    sqlBuilder.append("\"").append(field.getFieldName()).append("\"");
                     valueStr.append(" ? ");
                     _checkFieldLengthOverLimit(field);
                 }
