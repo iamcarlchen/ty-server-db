@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.data.ext;
+package com.greatbee.core.manager.data.sqlserver.manager;
 
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;

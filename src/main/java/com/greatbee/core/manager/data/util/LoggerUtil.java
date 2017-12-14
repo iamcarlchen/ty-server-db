@@ -1,6 +1,5 @@
 package com.greatbee.core.manager.data.util;
 
-import com.greatbee.core.manager.data.ext.OracleDataManager;
 import org.apache.log4j.Logger;
 
 /**

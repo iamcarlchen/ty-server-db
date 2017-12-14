@@ -16,12 +16,8 @@ import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
-import com.greatbee.core.manager.data.ext.OracleDataManager;
-import com.oracle.tools.packager.mac.MacAppBundler;
-import org.apache.poi.util.SystemOutLogger;
-import org.aspectj.apache.bcel.util.NonCachingClassLoaderRepository;
+import com.greatbee.core.manager.data.oracle.manager.OracleDataManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.GsonBuilderUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,9 +93,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         for (Field field : fields) {
-            if (!field.isPk()) {
-                //主键不插入
-            } else if (StringUtil.isValid(field.getDt()) && (field.getDt().equalsIgnoreCase(DT.Date.getType()) || field.getDt().equalsIgnoreCase(DT.Time.getType()))) {
+            if (StringUtil.isValid(field.getDt()) && (field.getDt().equalsIgnoreCase(DT.Date.getType()) || field.getDt().equalsIgnoreCase(DT.Time.getType()))) {
                 //插入时间类型的数据
                 field.setFieldValue("2001-10-10 20:40:20");
             } else if (StringUtil.isValid(field.getDt()) && (field.getDt().equalsIgnoreCase(DT.INT.getType()) || field.getDt().equalsIgnoreCase(DT.Double.getType()))) {

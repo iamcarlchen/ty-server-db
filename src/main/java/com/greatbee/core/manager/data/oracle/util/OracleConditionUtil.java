@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.data.util;
+package com.greatbee.core.manager.data.oracle.util;
 
 import com.greatbee.base.util.BooleanUtil;
 import com.greatbee.base.util.StringUtil;

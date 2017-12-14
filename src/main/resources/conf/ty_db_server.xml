@@ -5,8 +5,8 @@
        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
     <!-- Oracle Data Manager-->
-    <bean id="oracleDataManager" class="com.greatbee.core.manager.data.ext.OracleDataManager"/>
+    <bean id="oracleDataManager" class="com.greatbee.core.manager.data.oracle.manager.OracleDataManager"/>
 
     <!-- SQLServer Data Manager-->
-    <bean id="sqlServerDataManager" class="com.greatbee.core.manager.data.ext.SQLServerDataManager"/>
+    <bean id="sqlServerDataManager" class="com.greatbee.core.manager.data.sqlserver.manager.SQLServerDataManager"/>
 </beans>

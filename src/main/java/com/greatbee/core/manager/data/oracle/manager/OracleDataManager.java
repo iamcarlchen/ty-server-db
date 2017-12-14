@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.data.ext;
+package com.greatbee.core.manager.data.oracle.manager;
 
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
@@ -20,11 +20,9 @@ import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
 import com.greatbee.core.manager.data.util.LoggerUtil;
-import com.greatbee.core.manager.data.util.OracleBuildUtils;
-import com.greatbee.core.manager.data.util.OracleConditionUtil;
-import com.greatbee.core.manager.utils.BuildUtils;
+import com.greatbee.core.manager.data.oracle.util.OracleBuildUtils;
+import com.greatbee.core.manager.data.oracle.util.OracleConditionUtil;
 import com.greatbee.core.manager.utils.DataSourceUtils;
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
@@ -664,17 +662,36 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 StringBuilder sqlBuilder = new StringBuilder("INSERT INTO \"");
                 sqlBuilder.append(oi.getResource()).append("\" (");
                 StringBuilder valueStr = new StringBuilder();
+                List<Field> createFields = new ArrayList<Field>();
 
-                int id;
-                for (id = 0; id < fields.size(); ++id) {
-                    Field field = (Field) fields.get(id);
-                    if (id > 0) {
+                int id = 0;
+                for (int i = 0; i < fields.size(); ++i) {
+                    Field field = (Field) fields.get(i);
+                    if (i > 0) {
                         sqlBuilder.append(",");
                         valueStr.append(",");
                     }
 
                     sqlBuilder.append("\"").append(field.getFieldName()).append("\"");
-                    valueStr.append(" ? ");
+                    if (field.isPk() && (field.getDt().equalsIgnoreCase(DT.INT.getType()) || field.getDt().equalsIgnoreCase(DT.Double.getType()))) {
+                        String seqQuery = "select \"SEQ_" + oi.getAlias().toUpperCase() + "_" + field.getFieldName().toUpperCase() + "\".\"NEXTVAL\" from \"DUAL\"";
+                        ps = conn.prepareStatement(seqQuery, 0);
+                        ps.executeUpdate();
+                        rs = ps.getResultSet();
+                        if (rs.next()) {
+                            id = rs.getInt(1);
+                        }
+//                        valueStr.append(" SEQ_" + oi.getAlias().toUpperCase() + "_" + field.getFieldName().toUpperCase() + ".nextval ");//需要事先创建好序列
+                        valueStr.append(" ? ");
+                        field.setFieldValue(String.valueOf(id));
+                        createFields.add(field);
+                    } else if (field.getDt().equalsIgnoreCase(DT.Date.getType()) || field.getDt().equalsIgnoreCase(DT.Time.getType())) {
+                        valueStr.append(" to_date(?,'yyyy-mm-dd hh24:mi:ss') ");
+                        createFields.add(field);
+                    } else {
+                        valueStr.append(" ? ");
+                        createFields.add(field);
+                    }
                     _checkFieldLengthOverLimit(field);
                 }
 
@@ -683,13 +700,13 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 sqlBuilder.append(")");
                 logger.info("创建对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString(), 1);
-                _setPsParam(1, ps, fields);
+                _setPsParam(1, ps, createFields);
                 ps.executeUpdate();
-                rs = ps.getGeneratedKeys();
-                id = 0;
-                if (rs.next()) {
-                    id = rs.getInt(1);
-                }
+//                rs = ps.getGeneratedKeys();
+//                id = 0;
+//                if (rs.next()) {
+//                    id = rs.getInt(1);
+//                }
 
                 result = String.valueOf(id);
             } catch (SQLException e) {
