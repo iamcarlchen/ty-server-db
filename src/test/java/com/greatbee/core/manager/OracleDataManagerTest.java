@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.greatbee.DBBaseTest;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
+import com.greatbee.base.bean.DataList;
 import com.greatbee.base.util.RandomGUIDUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.CT;
@@ -84,6 +85,8 @@ public class OracleDataManagerTest extends DBBaseTest {
     }
 
 
+
+
     /**
      * 测试插入单条数据(未通过)
      *
@@ -112,6 +115,29 @@ public class OracleDataManagerTest extends DBBaseTest {
 //        pkField.setFieldValue("2");//设置主键值
         String result = oracleDataManager.create(oiView.getOi(), fields);
         System.out.println("Data -> " + result);
+    }
+
+
+    /**
+     * 测试获取列表
+     *
+     * @throws DBException
+     */
+    public void testListByConnectorTree() throws DBException {
+        OIView oiView = getOIView();
+        Field pkField = null;
+        Map<String, Field> queryField = new HashMap<String, Field>();
+        List<Field> fields = oiView.getFields();
+        for (Field field : fields) {
+            queryField.put(field.getFieldName(), field);
+        }
+
+        ConnectorTree queryTree = new ConnectorTree();
+        queryTree.setOi(oiView.getOi());
+        queryTree.setFields(queryField);
+
+        DataList dataList = oracleDataManager.list(queryTree);
+        System.out.println("Data -> " + JSONObject.toJSONString(dataList));
     }
 
 
