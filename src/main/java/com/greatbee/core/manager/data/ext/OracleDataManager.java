@@ -160,21 +160,21 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 DataPage result;
                 try {
                     conn = _ds.getConnection();
-                    String buildAllSql = "SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM (" + BuildUtils.buildAllSql(connectorTree);
+                    String buildAllSql = "SELECT * FROM (SELECT \"TY_TABLE\".*, ROWNUM \"TY_ROWNUM\" FROM (" + OracleBuildUtils.buildAllSql(connectorTree);
                     buildAllSql = buildAllSql + " ) \"TY_TABLE\" WHERE ROWNUM <= ?) WHERE \"TY_ROWNUM\" > ? ";
                     logger.info("查询对象SQL：" + buildAllSql);
                     ps = conn.prepareStatement(buildAllSql);
-                    int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+                    int index = OracleBuildUtils.buildTreeConditionPs(1, ps, connectorTree);
 
-                    ps.setInt(index + 1, pageSize);
-                    ps.setInt(index, (page - 1) * pageSize);
+                    ps.setInt(index, pageSize);
+                    ps.setInt(index + 1, (page - 1) * pageSize);
 
                     rs = ps.executeQuery();
                     int count = this.count(connectorTree);
                     System.out.println("总记录数：" + count);
                     ArrayList list = new ArrayList();
                     HashMap map = new HashMap();
-                    BuildUtils.buildAllFields(connectorTree, map);
+                    OracleBuildUtils.buildAllFields(connectorTree, map);
 
                     while (rs.next()) {
                         Data dp = new Data();
@@ -445,21 +445,21 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     }
 
                     String list = count.getFieldName();
-                    sqlBuilder.append(" ").append(list).append(" ");
+                    sqlBuilder.append(" \"").append(list).append("\" ");
                 }
 
-                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
-                    Condition.buildConditionSql(sqlBuilder, condition);
+                    OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
                 }
 
                 sqlBuilder.append(" ) \"TY_TABLE\" WHERE ROWNUM <= ?) WHERE \"TY_ROWNUM\" > ?");
                 logger.info("查询对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
-                index = Condition.buildConditionSqlPs(1, ps, condition);
-                ps.setInt(index + 1, pageSize);
-                ps.setInt(index, (page - 1) * pageSize);
+                index = OracleConditionUtil.buildConditionSqlPs(1, ps, condition);
+                ps.setInt(index, pageSize);
+                ps.setInt(index + 1, (page - 1) * pageSize);
                 rs = ps.executeQuery();
                 int totalCount = this._pageTotalCount(oi, condition);
                 System.out.println("总记录数：" + totalCount);
@@ -535,18 +535,18 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                     }
 
                     String map = list.getFieldName();
-                    sqlBuilder.append(" ").append(map).append(" ");
+                    sqlBuilder.append(" \"").append(map).append("\" ");
                 }
 
-                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
-                    Condition.buildConditionSql(sqlBuilder, condition);
+                    OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
                 }
 
                 logger.info("查询对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
-                Condition.buildConditionSqlPs(1, ps, condition);
+                OracleConditionUtil.buildConditionSqlPs(1, ps, condition);
                 rs = ps.executeQuery();
                 ArrayList resultList = new ArrayList();
 
@@ -835,10 +835,10 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
             try {
                 conn = _ds.getConnection();
                 StringBuilder sqlBuilder = new StringBuilder("SELECT count(*) ");
-                sqlBuilder.append(" FROM ").append(oi.getResource()).append(" ");
+                sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
-                    Condition.buildConditionSql(sqlBuilder, condition);
+                    OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
                 }
 
                 logger.info("查询对象SQL：" + sqlBuilder.toString());

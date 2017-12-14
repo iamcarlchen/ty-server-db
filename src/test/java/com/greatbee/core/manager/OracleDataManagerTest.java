@@ -5,6 +5,7 @@ import com.greatbee.DBBaseTest;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
+import com.greatbee.base.bean.DataPage;
 import com.greatbee.base.util.RandomGUIDUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.CT;
@@ -85,8 +86,6 @@ public class OracleDataManagerTest extends DBBaseTest {
     }
 
 
-
-
     /**
      * 测试插入单条数据(未通过)
      *
@@ -138,6 +137,66 @@ public class OracleDataManagerTest extends DBBaseTest {
 
         DataList dataList = oracleDataManager.list(queryTree);
         System.out.println("Data -> " + JSONObject.toJSONString(dataList));
+    }
+
+
+    /**
+     * 测试获取列表(condition)
+     *
+     * @throws DBException
+     */
+    public void testListByCondition() throws DBException {
+        OIView oiView = getOIView();
+
+        List<Field> fields = oiView.getFields();
+        Condition queryCondition = new Condition();
+        queryCondition.setConditionFieldName("alias");
+        queryCondition.setConditionFieldValue("abc");
+        queryCondition.setCt(CT.EQ.getName());
+
+        DataList dataList = oracleDataManager.list(oiView.getOi(), fields, queryCondition);
+        System.out.println("Data -> " + JSONObject.toJSONString(dataList));
+    }
+
+
+    /**
+     * 测试分页列表读取
+     *
+     * @throws DBException
+     */
+    public void testPageByConnectorTree() throws DBException {
+        OIView oiView = getOIView();
+        Field pkField = null;
+        Map<String, Field> queryField = new HashMap<String, Field>();
+        List<Field> fields = oiView.getFields();
+        for (Field field : fields) {
+            queryField.put(field.getFieldName(), field);
+        }
+
+        ConnectorTree queryTree = new ConnectorTree();
+        queryTree.setOi(oiView.getOi());
+        queryTree.setFields(queryField);
+
+        DataPage dataPage = oracleDataManager.page(1, 10, queryTree);
+        System.out.println("Data -> " + JSONObject.toJSONString(dataPage));
+    }
+
+    /**
+     * 测试分页列表读取(Condition)
+     *
+     * @throws DBException
+     */
+    public void testPageByCondition() throws DBException {
+        OIView oiView = getOIView();
+
+        List<Field> fields = oiView.getFields();
+        Condition queryCondition = new Condition();
+        queryCondition.setConditionFieldName("alias");
+        queryCondition.setConditionFieldValue("abc");
+        queryCondition.setCt(CT.EQ.getName());
+
+        DataPage dataPage = oracleDataManager.page(oiView.getOi(), fields, 1, 10, queryCondition);
+        System.out.println("Data -> " + JSONObject.toJSONString(dataPage));
     }
 
 
