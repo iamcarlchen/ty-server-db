@@ -23,6 +23,7 @@ import org.aspectj.apache.bcel.util.NonCachingClassLoaderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.GsonBuilderUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,6 +161,27 @@ public class OracleDataManagerTest extends DBBaseTest {
 
 
     /**
+     * 测试count函数
+     *
+     * @throws DBException
+     */
+    public void testCountByCondition() throws DBException {
+        OIView oiView = getOIView();
+        Field pkField = null;
+        Map<String, Field> queryField = new HashMap<String, Field>();
+        List<Field> fields = oiView.getFields();
+        for (Field field : fields) {
+            queryField.put(field.getFieldName(), field);
+        }
+
+        ConnectorTree queryTree = new ConnectorTree();
+        queryTree.setOi(oiView.getOi());
+        queryTree.setFields(queryField);
+        int result = oracleDataManager.count(queryTree);
+        System.out.println("count -> " + result);
+    }
+
+    /**
      * 测试分页列表读取
      *
      * @throws DBException
@@ -227,7 +249,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      *
      * @throws DBException
      */
-    public void testReadByPK() throws DBException {
+    public Data testReadByPK() throws DBException {
         OIView oiView = getOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
@@ -237,10 +259,75 @@ public class OracleDataManagerTest extends DBBaseTest {
                 break;
             }
         }
-        pkField.setFieldValue("2");//设置主键值
+        pkField.setFieldValue("1");//设置主键值
         Data data = oracleDataManager.read(oiView.getOi(), fields, pkField);
         System.out.println("Data -> " + JSONObject.toJSONString(data));
+        return data;
     }
+
+
+    /**
+     * 测试更新数据(PK)
+     *
+     * @throws DBException
+     */
+    public void testUpdateByPK() throws DBException {
+        OIView oiView = getOIView();
+        Field pkField = null;
+        List<Field> fields = oiView.getFields();
+        List<Field> updateFields = new ArrayList<Field>();
+
+        Data data = this.testReadByPK();
+
+        for (Field field : fields) {
+            if (field.isPk()) {
+                pkField = field;
+                pkField.setFieldValue("1");
+            } else {
+                if (data.containsKey(field.getFieldName())) {
+                    field.setFieldValue(data.getString(field.getFieldName()));
+                    updateFields.add(field);
+                }
+            }
+        }
+
+        oracleDataManager.update(oiView.getOi(), updateFields, pkField);
+        System.out.println("update success!");
+    }
+
+    /**
+     * 测试更新数据(condition)
+     *
+     * @throws DBException
+     */
+    public void testUpdateByCondition() throws DBException {
+        OIView oiView = getOIView();
+
+        List<Field> fields = oiView.getFields();
+        List<Field> updateFields = new ArrayList<Field>();
+
+        Data data = this.testReadByPK();
+
+        for (Field field : fields) {
+            if (field.isPk()) {
+
+            } else {
+                if (data.containsKey(field.getFieldName())) {
+                    field.setFieldValue(data.getString(field.getFieldName()));
+                    updateFields.add(field);
+                }
+            }
+        }
+
+        Condition queryCondition = new Condition();
+        queryCondition.setConditionFieldName("alias");
+        queryCondition.setConditionFieldValue("abc");
+        queryCondition.setCt(CT.EQ.getName());
+
+        oracleDataManager.update(oiView.getOi(), updateFields, queryCondition);
+        System.out.println("update success!");
+    }
+
 
     /**
      * 测试通过主键删除数据
@@ -284,28 +371,6 @@ public class OracleDataManagerTest extends DBBaseTest {
         deleteCondition.setConditionFieldValue("abc");
         deleteCondition.setCt(CT.EQ.getName());
         oracleDataManager.delete(oiView.getOi(), deleteCondition);
-    }
-
-
-    /**
-     * 测试count函数
-     *
-     * @throws DBException
-     */
-    public void testCountByCondition() throws DBException {
-        OIView oiView = getOIView();
-        Field pkField = null;
-        Map<String, Field> queryField = new HashMap<String, Field>();
-        List<Field> fields = oiView.getFields();
-        for (Field field : fields) {
-            queryField.put(field.getFieldName(), field);
-        }
-
-        ConnectorTree queryTree = new ConnectorTree();
-        queryTree.setOi(oiView.getOi());
-        queryTree.setFields(queryField);
-        int result = oracleDataManager.count(queryTree);
-        System.out.println("count -> " + result);
     }
 
 

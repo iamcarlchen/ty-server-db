@@ -85,7 +85,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 ArrayList fields1 = new ArrayList();
 
                 while (columns.next()) {
-                    Field oiView = new Field();
+                    Field field = new Field();
                     String colName = columns.getString("COLUMN_NAME");
                     int colSize = columns.getInt("COLUMN_SIZE");
                     int dataType = columns.getInt("DATA_TYPE");
@@ -94,12 +94,12 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                         remarks = colName;
                     }
 
-                    oiView.setName(colName);
-                    oiView.setDt(_transferMysqlTypeToTySqlType(dataType, colSize));
-                    oiView.setFieldName(colName);
-                    oiView.setOiAlias(objectIdentified.getAlias());
-                    oiView.setFieldLength(Integer.valueOf(colSize));
-                    oiView.setDescription(remarks);
+                    field.setName(colName);
+                    field.setDt(_transferMysqlTypeToTySqlType(dataType, colSize));
+                    field.setFieldName(colName);
+                    field.setOiAlias(objectIdentified.getAlias());
+                    field.setFieldLength(Integer.valueOf(colSize));
+                    field.setDescription(remarks);
                     boolean isPk = false;
                     Iterator iterator = pkColNames.iterator();
 
@@ -111,8 +111,8 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                         }
                     }
 
-                    oiView.setPk(isPk);
-                    fields1.add(oiView);
+                    field.setPk(isPk);
+                    fields1.add(field);
                 }
 
                 OIView oiView1 = new OIView();
@@ -716,19 +716,26 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
             try {
                 conn = _ds.getConnection();
                 StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-                sqlBuilder.append(oi.getResource()).append(" ");
+                sqlBuilder.append("\"").append(oi.getResource()).append("\"").append(" ");
                 sqlBuilder.append(" SET ");
 
                 for (int i = 0; i < fields.size(); ++i) {
                     Field field = (Field) fields.get(i);
-                    if (i > 0) {
-                        sqlBuilder.append(",");
-                    }
-                    sqlBuilder.append(field.getFieldName()).append("=? ");
-                    _checkFieldLengthOverLimit(field);
-                }
+                    if (!field.isPk()) {
+                        if (field.getDt().equalsIgnoreCase(DT.Date.getType()) || field.getDt().equalsIgnoreCase(DT.Time.getType())) {
+                            //oracle时间类型要做特殊处理
+                            sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=  to_date(?,'yyyy-mm-dd hh24:mi:ss')");
+                        } else {
+                            sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=? ");
+                        }
 
-                sqlBuilder.append(" WHERE ").append(pkField.getFieldName()).append("=").append(pkField.getFieldValue());
+                        sqlBuilder.append(",");
+                        _checkFieldLengthOverLimit(field);
+                    }
+                }
+                sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(","));
+
+                sqlBuilder.append(" WHERE ").append("\"").append(pkField.getFieldName()).append("\"").append("=").append(pkField.getFieldValue());
                 logger.info("更新对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _setPsParam(1, ps, fields);
@@ -754,28 +761,34 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
             try {
                 conn = _ds.getConnection();
                 StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
-                sqlBuilder.append(oi.getResource()).append(" ");
+                sqlBuilder.append("\"").append(oi.getResource()).append("\"").append(" ");
                 sqlBuilder.append(" SET ");
 
                 int _index;
-                for (_index = 0; _index < fields.size(); ++_index) {
-                    Field field = (Field) fields.get(_index);
-                    if (_index > 0) {
+                for (int i = 0; i < fields.size(); ++i) {
+                    Field field = (Field) fields.get(i);
+                    if (!field.isPk()) {
+                        if (field.getDt().equalsIgnoreCase(DT.Date.getType()) || field.getDt().equalsIgnoreCase(DT.Time.getType())) {
+                            //oracle时间类型要做特殊处理
+                            sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=  to_date(?,'yyyy-mm-dd hh24:mi:ss')");
+                        } else {
+                            sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=? ");
+                        }
                         sqlBuilder.append(",");
+                        _checkFieldLengthOverLimit(field);
                     }
-                    sqlBuilder.append(field.getFieldName()).append("=? ");
-                    _checkFieldLengthOverLimit(field);
                 }
+                sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(","));
 
                 if (condition != null) {
                     sqlBuilder.append(" WHERE ");
-                    Condition.buildConditionSql(sqlBuilder, condition);
+                    OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
                 }
 
                 logger.info("更新对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
                 _index = _setPsParam(1, ps, fields);
-                Condition.buildConditionSqlPs(_index, ps, condition);
+                OracleConditionUtil.buildConditionSqlPs(_index, ps, condition);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -862,7 +875,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
 
     private static void _checkFieldLengthOverLimit(Field field) throws DBException {
-        if (!DT.INT.getType().equals(field.getDt()) && (!DT.Boolean.getType().equals(field.getDt()) || field.getFieldValue() != null && !field.getFieldValue().equals("false") && !field.getFieldValue().equals("true"))) {
+        if (!DT.Time.getType().equals(field.getDt()) && !DT.Date.getType().equals(field.getDt()) && !DT.Double.getType().equals(field.getDt()) && !DT.INT.getType().equals(field.getDt()) && (!DT.Boolean.getType().equals(field.getDt()) || field.getFieldValue() != null && !field.getFieldValue().equals("false") && !field.getFieldValue().equals("true"))) {
             if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength().intValue() > 0 && field.getFieldValue().length() > field.getFieldLength().intValue()) {
                 throw new DBException("字段值长度超过字段限制长度", ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
             }
