@@ -1,8 +1,8 @@
 package com.greatbee.core.manager.data.util;
 
 import com.greatbee.base.bean.DBException;
-import com.greatbee.core.bean.constant.DSCF;
-import com.greatbee.core.bean.constant.DST;
+import com.greatbee.core.manager.data.bean.constant.DSCF;
+import com.greatbee.core.manager.data.bean.constant.DST;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.utils.RedisBuildUtil;
@@ -16,7 +16,7 @@ import java.util.Properties;
 /**
  * Created by usagizhang on 17/12/6.
  */
-public class OracleDataSourceUtils {
+public class DataSourceUtils {
     public static final String MYSQL_DRIVER = "oracle.jdbc.OracleDriver";
     private static final String DB_CONFIG_PATH = "db/";
     private static final String DB_CONFIG_URL = "db.connection";
@@ -24,7 +24,7 @@ public class OracleDataSourceUtils {
     private static final String DB_CONFIG_PASSWORD = "db.connection.password";
     private static Map<String, DataSource> dataSourceConfigs = new HashMap();
 
-    public OracleDataSourceUtils() {
+    public DataSourceUtils() {
     }
 
     public static DataSource getDatasource(String dsAlias, DSManager dsManager) {
@@ -41,15 +41,19 @@ public class OracleDataSourceUtils {
 
     public static DataSource getDatasource(DS ds) {
         Object __ds = null;
-        if(dataSourceConfigs.containsKey(ds.getAlias())) {
-            __ds = (DataSource)dataSourceConfigs.get(ds.getAlias());
+        if (dataSourceConfigs.containsKey(ds.getAlias())) {
+            __ds = (DataSource) dataSourceConfigs.get(ds.getAlias());
         } else {
             DriverManagerDataSource _ds = new DriverManagerDataSource();
-            if(DST.Oracle.getType().equals(ds.getDst())) {
+            if (DST.Oracle.getType().equals(ds.getDst())) {
                 _ds.setDriverClassName("oracle.jdbc.OracleDriver");
+            } else if (DST.Mysql.getType().equals(ds.getDst())) {
+                _ds.setDriverClassName("com.mysql.jdbc.Driver");
+            } else if (DST.SqlServer.getType().equals(ds.getDst())) {
+                _ds.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             }
 
-            if(DSCF.FILE.getType().equalsIgnoreCase(ds.getDsConfigFrom())) {
+            if (DSCF.FILE.getType().equalsIgnoreCase(ds.getDsConfigFrom())) {
                 Properties pops = RedisBuildUtil.filterRedis("db/" + ds.getAlias() + ".properties");
                 String url = pops.getProperty("db.connection");
                 String username = pops.getProperty("db.connection.username");
@@ -67,7 +71,7 @@ public class OracleDataSourceUtils {
             __ds = _ds;
         }
 
-        return (DataSource)__ds;
+        return (DataSource) __ds;
     }
 
 

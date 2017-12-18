@@ -19,10 +19,11 @@ import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
+import com.greatbee.core.manager.data.util.DataSourceUtils;
 import com.greatbee.core.manager.data.util.LoggerUtil;
 import com.greatbee.core.manager.data.oracle.util.OracleBuildUtils;
 import com.greatbee.core.manager.data.oracle.util.OracleConditionUtil;
-import com.greatbee.core.manager.utils.DataSourceUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;

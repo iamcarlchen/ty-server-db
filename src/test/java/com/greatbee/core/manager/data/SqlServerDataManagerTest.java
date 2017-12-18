@@ -1,5 +1,6 @@
-package com.greatbee.core.manager;
+package com.greatbee.core.manager.data;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.DBBaseTest;
 import com.greatbee.base.bean.DBException;
@@ -16,7 +17,8 @@ import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
-import com.greatbee.core.manager.data.oracle.manager.OracleDataManager;
+import com.greatbee.core.manager.DSManager;
+import com.greatbee.core.manager.data.sqlserver.manager.SQLServerDataManager;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -30,18 +32,18 @@ import java.util.Map;
  * Author: CarlChen
  * Date: 2017/11/21
  */
-public class OracleDataManagerTest extends DBBaseTest {
+public class SqlServerDataManagerTest extends DBBaseTest {
 
     @Autowired
     private DSManager dsManager;
 
     @Autowired
-    private OracleDataManager oracleDataManager;
+    private SQLServerDataManager sqlServerDataManager;
 
     public void setUp() {
         super.setUp("test_server.xml");
         dsManager = (DSManager) context.getBean("dsManager");
-        oracleDataManager = (OracleDataManager) context.getBean("oracleDataManager");
+        sqlServerDataManager = (SQLServerDataManager) context.getBean("sqlServerDataManager");
     }
 
     /**
@@ -49,11 +51,11 @@ public class OracleDataManagerTest extends DBBaseTest {
      *
      * @return
      */
-    public DSView getDSView() {
+    public DSView testGetDSView() {
 
         try {
-            DS oracleDataSource = dsManager.getDSByAlias("test_oracle");
-            DSView dv = oracleDataManager.exportFromPhysicsDS(oracleDataSource);
+            DS oracleDataSource = dsManager.getDSByAlias("test_sqlserver");
+            DSView dv = sqlServerDataManager.exportFromPhysicsDS(oracleDataSource);
             System.out.println("DSView -> " + JSONObject.toJSONString(dv));
             return dv;
         } catch (DBException e) {
@@ -67,10 +69,11 @@ public class OracleDataManagerTest extends DBBaseTest {
      *
      * @return
      */
-    private OIView getOIView() throws DBException {
+    private OIView testGetOIView() throws DBException {
         OIView oiView = null;
-        DSView dsView = this.getDSView();
+        DSView dsView = this.testGetDSView();
         List<OIView> oiViews = dsView.getOiViews();
+        System.out.println("OIViewList -> " + JSONArray.toJSONString(oiViews));
         if (oiViews != null) {
             //选择测试用的OI
             for (OIView item : oiViews) {
@@ -79,17 +82,18 @@ public class OracleDataManagerTest extends DBBaseTest {
                 }
             }
         }
+        System.out.println("OIView -> " + JSONObject.toJSONString(oiView));
         return oiView;
     }
 
 
     /**
-     * 测试插入单条数据(未通过)
+     * 测试插入单条数据
      *
      * @throws DBException
      */
     public void testCreateData() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         for (Field field : fields) {
@@ -107,7 +111,7 @@ public class OracleDataManagerTest extends DBBaseTest {
 
 
 //        pkField.setFieldValue("2");//设置主键值
-        String result = oracleDataManager.create(oiView.getOi(), fields);
+        String result = sqlServerDataManager.create(oiView.getOi(), fields);
         System.out.println("Data -> " + result);
     }
 
@@ -118,7 +122,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testListByConnectorTree() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         Map<String, Field> queryField = new HashMap<String, Field>();
         List<Field> fields = oiView.getFields();
@@ -130,7 +134,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryTree.setOi(oiView.getOi());
         queryTree.setFields(queryField);
 
-        DataList dataList = oracleDataManager.list(queryTree);
+        DataList dataList = sqlServerDataManager.list(queryTree);
         System.out.println("Data -> " + JSONObject.toJSONString(dataList));
     }
 
@@ -141,7 +145,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testListByCondition() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
 
         List<Field> fields = oiView.getFields();
         Condition queryCondition = new Condition();
@@ -149,7 +153,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryCondition.setConditionFieldValue("abc");
         queryCondition.setCt(CT.EQ.getName());
 
-        DataList dataList = oracleDataManager.list(oiView.getOi(), fields, queryCondition);
+        DataList dataList = sqlServerDataManager.list(oiView.getOi(), fields, queryCondition);
         System.out.println("Data -> " + JSONObject.toJSONString(dataList));
     }
 
@@ -160,7 +164,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testCountByCondition() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         Map<String, Field> queryField = new HashMap<String, Field>();
         List<Field> fields = oiView.getFields();
@@ -171,7 +175,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         ConnectorTree queryTree = new ConnectorTree();
         queryTree.setOi(oiView.getOi());
         queryTree.setFields(queryField);
-        int result = oracleDataManager.count(queryTree);
+        int result = sqlServerDataManager.count(queryTree);
         System.out.println("count -> " + result);
     }
 
@@ -181,7 +185,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testPageByConnectorTree() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         Map<String, Field> queryField = new HashMap<String, Field>();
         List<Field> fields = oiView.getFields();
@@ -193,7 +197,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryTree.setOi(oiView.getOi());
         queryTree.setFields(queryField);
 
-        DataPage dataPage = oracleDataManager.page(1, 10, queryTree);
+        DataPage dataPage = sqlServerDataManager.page(1, 10, queryTree);
         System.out.println("Data -> " + JSONObject.toJSONString(dataPage));
     }
 
@@ -203,7 +207,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testPageByCondition() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
 
         List<Field> fields = oiView.getFields();
         Condition queryCondition = new Condition();
@@ -211,7 +215,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryCondition.setConditionFieldValue("abc");
         queryCondition.setCt(CT.EQ.getName());
 
-        DataPage dataPage = oracleDataManager.page(oiView.getOi(), fields, 1, 10, queryCondition);
+        DataPage dataPage = sqlServerDataManager.page(oiView.getOi(), fields, 1, 10, queryCondition);
         System.out.println("Data -> " + JSONObject.toJSONString(dataPage));
     }
 
@@ -222,7 +226,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testReadByConnectorTree() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         Map<String, Field> queryField = new HashMap<String, Field>();
         List<Field> fields = oiView.getFields();
@@ -234,7 +238,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryTree.setOi(oiView.getOi());
         queryTree.setFields(queryField);
 
-        Data data = oracleDataManager.read(queryTree);
+        Data data = sqlServerDataManager.read(queryTree);
         System.out.println("Data -> " + JSONObject.toJSONString(data));
     }
 
@@ -244,7 +248,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public Data testReadByPK() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         for (Field field : fields) {
@@ -254,7 +258,7 @@ public class OracleDataManagerTest extends DBBaseTest {
             }
         }
         pkField.setFieldValue("1");//设置主键值
-        Data data = oracleDataManager.read(oiView.getOi(), fields, pkField);
+        Data data = sqlServerDataManager.read(oiView.getOi(), fields, pkField);
         System.out.println("Data -> " + JSONObject.toJSONString(data));
         return data;
     }
@@ -266,7 +270,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testUpdateByPK() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         List<Field> updateFields = new ArrayList<Field>();
@@ -285,7 +289,7 @@ public class OracleDataManagerTest extends DBBaseTest {
             }
         }
 
-        oracleDataManager.update(oiView.getOi(), updateFields, pkField);
+        sqlServerDataManager.update(oiView.getOi(), updateFields, pkField);
         System.out.println("update success!");
     }
 
@@ -295,7 +299,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testUpdateByCondition() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
 
         List<Field> fields = oiView.getFields();
         List<Field> updateFields = new ArrayList<Field>();
@@ -318,7 +322,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         queryCondition.setConditionFieldValue("abc");
         queryCondition.setCt(CT.EQ.getName());
 
-        oracleDataManager.update(oiView.getOi(), updateFields, queryCondition);
+        sqlServerDataManager.update(oiView.getOi(), updateFields, queryCondition);
         System.out.println("update success!");
     }
 
@@ -329,7 +333,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testDeleteByPK() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         for (Field field : fields) {
@@ -339,7 +343,7 @@ public class OracleDataManagerTest extends DBBaseTest {
             }
         }
         pkField.setFieldValue("3");//设置主键值
-        oracleDataManager.delete(oiView.getOi(), pkField);
+        sqlServerDataManager.delete(oiView.getOi(), pkField);
 
     }
 
@@ -350,7 +354,7 @@ public class OracleDataManagerTest extends DBBaseTest {
      * @throws DBException
      */
     public void testDeleteByCondition() throws DBException {
-        OIView oiView = getOIView();
+        OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
         for (Field field : fields) {
@@ -364,7 +368,7 @@ public class OracleDataManagerTest extends DBBaseTest {
         deleteCondition.setConditionFieldName("alias");
         deleteCondition.setConditionFieldValue("abc");
         deleteCondition.setCt(CT.EQ.getName());
-        oracleDataManager.delete(oiView.getOi(), deleteCondition);
+        sqlServerDataManager.delete(oiView.getOi(), deleteCondition);
     }
 
 
