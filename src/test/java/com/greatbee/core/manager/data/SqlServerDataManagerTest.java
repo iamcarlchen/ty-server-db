@@ -163,7 +163,7 @@ public class SqlServerDataManagerTest extends DBBaseTest {
      *
      * @throws DBException
      */
-    public void testCountByCondition() throws DBException {
+    public void testCountByConnectorTree() throws DBException {
         OIView oiView = testGetOIView();
         Field pkField = null;
         Map<String, Field> queryField = new HashMap<String, Field>();

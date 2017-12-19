@@ -3,10 +3,12 @@ package com.greatbee.core.manager.data.sqlserver.util;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.ConT;
+import com.greatbee.core.bean.constant.Order;
 import com.greatbee.core.bean.oi.Connector;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.FunctionField;
 import com.greatbee.core.bean.view.*;
+import org.springframework.data.redis.connection.SortParameters;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -110,16 +112,16 @@ public class SqlServerBuildUtils {
                 Condition.buildConditionSql(sql, currentCont.getCondition(), currentCont.getConnectorId());
             }
         } else if ("order_by".equals(type)) {
-            OrderBy var10 = currentCont.getOrderBy();
-            if (var10 != null) {
+            OrderBy orderByString = currentCont.getOrderBy();
+            if (orderByString != null) {
                 if (sql.length() == 0) {
                     sql.append(" ORDER BY ");
                 } else {
                     sql.append(",");
                 }
 
-                if (var10 instanceof MultiOrderBy) {
-                    List var13 = ((MultiOrderBy) var10).getOrderBys();
+                if (orderByString instanceof MultiOrderBy) {
+                    List var13 = ((MultiOrderBy) orderByString).getOrderBys();
 
                     for (int var16 = 0; var16 < var13.size(); ++var16) {
                         if (var16 > 0) {
@@ -130,7 +132,24 @@ public class SqlServerBuildUtils {
                         sql.append(currentCont.getConnectorId()).append(".\"").append(var18.getOrderFieldName()).append("\" ").append(var18.getOrder().getType());
                     }
                 } else {
-                    sql.append(currentCont.getConnectorId()).append(".\"").append(var10.getOrderFieldName()).append("\" ").append(var10.getOrder().getType());
+                    sql.append(currentCont.getConnectorId()).append(".\"").append(orderByString.getOrderFieldName()).append("\" ").append(orderByString.getOrder().getType());
+                }
+            } else {
+                //执行默认排序
+                Map<String, Field> fieldMap = currentCont.getFields();
+                sql.append(" ORDER BY ");
+                int orderByCount = 0;
+                for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+                    Field item = entry.getValue();
+                    if (item != null) {
+                        if (item.isPk()) {
+                            if (orderByCount > 0) {
+                                sql.append(",");
+                            }
+                            sql.append(currentCont.getConnectorId()).append(".\"").append(item.getFieldName()).append("\" ").append(Order.ASC.getType());
+                            orderByCount++;
+                        }
+                    }
                 }
             }
         } else if ("group_by".equals(type)) {
