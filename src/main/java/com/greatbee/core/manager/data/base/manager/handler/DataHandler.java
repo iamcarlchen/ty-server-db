@@ -12,6 +12,6 @@ import java.sql.SQLException;
  */
 public interface DataHandler {
 
-    public Data execute(ResultSet rs) throws SQLException;
+    public void execute(ResultSet rs,Data data) throws SQLException;
 
 }

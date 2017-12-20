@@ -9,6 +9,6 @@ import java.sql.SQLException;
  */
 public interface QueryHandler {
 
-    public void execute(Connection conn, PreparedStatement ps) throws SQLException;
+    public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException;
 
 }

@@ -50,14 +50,14 @@ public abstract class DBManager implements ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                queryHandler.execute(conn, ps);
+                ps = queryHandler.execute(conn, ps);
                 rs = ps.executeQuery();
                 ArrayList list = new ArrayList();
 
 
                 while (rs.next()) {
                     Data item = new Data();
-                    item = dataHandler.execute(rs);
+                    dataHandler.execute(rs, item);
                     list.add(item);
                 }
 
@@ -83,15 +83,17 @@ public abstract class DBManager implements ExceptionCode {
             PreparedStatement ps = null;
             ResultSet rs = null;
 
-            DataPage result;
+            DataPage result = new DataPage();
             try {
                 conn = _ds.getConnection();
-                queryHandler.execute(conn, ps);
+                ps = queryHandler.execute(conn, ps);
                 rs = ps.executeQuery();
                 System.out.println("总记录数：" + count);
                 ArrayList list = new ArrayList();
                 while (rs.next()) {
-                    list.add(dataHandler.execute(rs));
+                    Data data = new Data();
+                    dataHandler.execute(rs, data);
+                    list.add(data);
                 }
 
                 DataPage dataPage = new DataPage();
@@ -126,17 +128,14 @@ public abstract class DBManager implements ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                queryHandler.execute(conn, ps);
+                ps = queryHandler.execute(conn, ps);
                 rs = ps.executeQuery();
-                Data resultData = new Data();
 
-                while (true) {
-                    if (rs.next()) {
-                        resultData = dataHandler.execute(rs);
-                    }
-                    Data result = resultData;
-                    return result;
+                Data result = new Data();
+                if (rs.next()) {
+                    dataHandler.execute(rs, result);
                 }
+                return result;
             } catch (SQLException e) {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
@@ -165,7 +164,7 @@ public abstract class DBManager implements ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                handler.execute(conn, ps);
+                ps = handler.execute(conn, ps);
                 for (rs = ps.executeQuery(); rs.next(); result = rs.getInt(1)) {
                     ;
                 }

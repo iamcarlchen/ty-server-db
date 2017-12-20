@@ -19,6 +19,7 @@ import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.sqlserver.manager.SQLServerDataManager;
+import com.greatbee.core.manager.data.sqlserver.manager.SQLServerDataManagerV2;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -37,13 +38,15 @@ public class SqlServerDataManagerTest extends DBBaseTest {
     @Autowired
     private DSManager dsManager;
 
+//    @Autowired
+//    private SQLServerDataManager sqlServerDataManager;
     @Autowired
-    private SQLServerDataManager sqlServerDataManager;
+    private SQLServerDataManagerV2 sqlServerDataManager;
 
     public void setUp() {
         super.setUp("test_server.xml");
         dsManager = (DSManager) context.getBean("dsManager");
-        sqlServerDataManager = (SQLServerDataManager) context.getBean("sqlServerDataManager");
+        sqlServerDataManager = (SQLServerDataManagerV2) context.getBean("sqlServerDataManager");
     }
 
     /**
@@ -247,7 +250,27 @@ public class SqlServerDataManagerTest extends DBBaseTest {
      *
      * @throws DBException
      */
-    public Data testReadByPK() throws DBException {
+    public void testReadByPK() throws DBException {
+        OIView oiView = testGetOIView();
+        Field pkField = null;
+        List<Field> fields = oiView.getFields();
+        for (Field field : fields) {
+            if (field.isPk()) {
+                pkField = field;
+                break;
+            }
+        }
+        pkField.setFieldValue("1");//设置主键值
+        Data data = sqlServerDataManager.read(oiView.getOi(), fields, pkField);
+        System.out.println("Data -> " + JSONObject.toJSONString(data));
+    }
+
+    /**
+     * 测试获取单条记录
+     *
+     * @throws DBException
+     */
+    public Data getReadByPK() throws DBException {
         OIView oiView = testGetOIView();
         Field pkField = null;
         List<Field> fields = oiView.getFields();
@@ -275,7 +298,7 @@ public class SqlServerDataManagerTest extends DBBaseTest {
         List<Field> fields = oiView.getFields();
         List<Field> updateFields = new ArrayList<Field>();
 
-        Data data = this.testReadByPK();
+        Data data = this.getReadByPK();
 
         for (Field field : fields) {
             if (field.isPk()) {
@@ -304,7 +327,7 @@ public class SqlServerDataManagerTest extends DBBaseTest {
         List<Field> fields = oiView.getFields();
         List<Field> updateFields = new ArrayList<Field>();
 
-        Data data = this.testReadByPK();
+        Data data = this.getReadByPK();
 
         for (Field field : fields) {
             if (field.isPk()) {
