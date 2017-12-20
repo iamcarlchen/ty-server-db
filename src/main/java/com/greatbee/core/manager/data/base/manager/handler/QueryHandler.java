@@ -1,5 +1,7 @@
 package com.greatbee.core.manager.data.base.manager.handler;
 
+import com.greatbee.base.bean.DBException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -9,6 +11,6 @@ import java.sql.SQLException;
  */
 public interface QueryHandler {
 
-    public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException;
+    public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
 }

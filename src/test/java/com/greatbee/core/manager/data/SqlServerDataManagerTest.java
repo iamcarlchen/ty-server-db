@@ -365,7 +365,7 @@ public class SqlServerDataManagerTest extends DBBaseTest {
                 break;
             }
         }
-        pkField.setFieldValue("3");//设置主键值
+        pkField.setFieldValue("5");//设置主键值
         sqlServerDataManager.delete(oiView.getOi(), pkField);
 
     }
@@ -389,7 +389,7 @@ public class SqlServerDataManagerTest extends DBBaseTest {
 
         Condition deleteCondition = new Condition();
         deleteCondition.setConditionFieldName("alias");
-        deleteCondition.setConditionFieldValue("abc");
+        deleteCondition.setConditionFieldValue("abc4");
         deleteCondition.setCt(CT.EQ.getName());
         sqlServerDataManager.delete(oiView.getOi(), deleteCondition);
     }

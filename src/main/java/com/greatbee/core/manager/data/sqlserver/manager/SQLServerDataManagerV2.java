@@ -19,6 +19,7 @@ import com.greatbee.core.manager.data.sqlserver.util.SqlServerBuildUtils;
 import com.greatbee.core.manager.data.sqlserver.util.SqlServerConditionUtil;
 import com.greatbee.core.manager.data.util.DataSourceUtils;
 import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.microsoft.sqlserver.jdbc.SQLServerConnection;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -177,7 +178,18 @@ public class SQLServerDataManagerV2 extends DataManager {
     }
 
     @Override
-    public PreparedStatement buildingCountQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) {
+    public PreparedStatement buildingCountQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+
+        StringBuilder sqlBuilder = new StringBuilder("SELECT count(*) ");
+        sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
+        if (condition != null) {
+            sqlBuilder.append(" WHERE ");
+            OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
+        }
+
+        logger.info("查询对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString());
+        Condition.buildConditionSqlPs(1, ps, condition);
 
         return ps;
     }
@@ -242,7 +254,54 @@ public class SQLServerDataManagerV2 extends DataManager {
     }
 
     @Override
-    public PreparedStatement buildingPageQuery(OI oi, List<Field> fields, int page, int pageSize, Condition condition, Connection conn, PreparedStatement ps) {
+    public PreparedStatement buildingPageQuery(OI oi, List<Field> fields, int page, int pageSize, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+
+        StringBuilder fieldBuilder = new StringBuilder(" SELECT ");
+        int index;
+        for (index = 0; index < fields.size(); ++index) {
+            Field count = (Field) fields.get(index);
+            if (index > 0) {
+                fieldBuilder.append(" , ");
+            }
+
+            String list = count.getFieldName();
+            fieldBuilder.append(" \"").append(list).append("\" ");
+        }
+
+
+        StringBuilder conditionBuilder = new StringBuilder();
+        if (condition != null) {
+            conditionBuilder.append(" WHERE ");
+            SqlServerConditionUtil.buildConditionSql(conditionBuilder, condition);
+        }
+
+        StringBuilder orderBuilder = new StringBuilder();
+        for (int k = 0; k < fields.size(); k++) {
+            Field field = (Field) fields.get(k);
+            if (field != null && field.isPk()) {
+                orderBuilder.append(" \"").append(field.getFieldName()).append("\" ");
+                orderBuilder.append(" ASC ,");
+            }
+        }
+        if (orderBuilder.length() > 0) {
+            orderBuilder.insert(0, " ORDER BY ");
+            orderBuilder.deleteCharAt(orderBuilder.lastIndexOf(","));
+        }
+
+
+        String querySN = RandomGUIDUtil.getGUID(RandomGUIDUtil.RANDOM_8).replace("-", "").replaceAll("\\d+", "");
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("WITH ").append(querySN).append(" AS (")
+//                .append(fieldBuilder).append(",ROW_NUMBER() OVER(").append(SqlServerBuildUtils.buildOrderBy(connectorTree)).append(") AS RowNo ").append(" FROM \"").append(oi.getResource()).append("\" ").append(conditionBuilder)
+                .append(fieldBuilder).append(",ROW_NUMBER() OVER(").append(orderBuilder).append(") AS RowNo ").append(" FROM \"").append(oi.getResource()).append("\" ").append(conditionBuilder)
+//                .append(fieldBuilder).append(",ROW_NUMBER() AS RowNo ").append(" FROM \"").append(oi.getResource()).append("\" ").append(conditionBuilder)
+                .append(") SELECT * FROM ").append(querySN).append(" WHERE RowNo BETWEEN ? AND ?;");
+
+        logger.info("查询对象SQL：" + queryBuilder.toString());
+        ps = conn.prepareStatement(queryBuilder.toString());
+        index = SqlServerConditionUtil.buildConditionSqlPs(1, ps, condition);
+        ps.setInt(index + 1, pageSize);
+        ps.setInt(index, (page - 1) * pageSize);
 
         return ps;
     }
@@ -278,7 +337,18 @@ public class SQLServerDataManagerV2 extends DataManager {
     }
 
     @Override
-    public PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) {
+    public PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+
+        StringBuilder sqlBuilder = new StringBuilder("DELETE FROM \"");
+        sqlBuilder.append(oi.getResource()).append("\" ");
+        if (condition != null) {
+            sqlBuilder.append(" WHERE ");
+            OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
+        }
+
+        logger.info("查询对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString());
+        SqlServerConditionUtil.buildConditionSqlPs(1, ps, condition);
 
         return ps;
     }
@@ -289,19 +359,66 @@ public class SQLServerDataManagerV2 extends DataManager {
     }
 
     @Override
-    public PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) {
-
+    public PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException {
+        StringBuilder sqlBuilder = new StringBuilder("DELETE FROM \"");
+        sqlBuilder.append(oi.getResource()).append("\" ");
+        sqlBuilder.append(" WHERE \"").append(pkField.getFieldName()).append("\"=? ");
+        logger.info("删除对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString());
+        _setPsParamPk(1, ps, pkField);
         return ps;
     }
 
     @Override
-    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) {
+    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws DBException, SQLException {
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
+        sqlBuilder.append("\"").append(oi.getResource()).append("\"").append(" ");
+        sqlBuilder.append(" SET ");
 
+        for (int i = 0; i < fields.size(); ++i) {
+            Field field = (Field) fields.get(i);
+            if (!field.isPk()) {
+                sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=? ");
+                sqlBuilder.append(",");
+                _checkFieldLengthOverLimit(field);
+            }
+        }
+        sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(","));
+
+        sqlBuilder.append(" WHERE ").append("\"").append(pkField.getFieldName()).append("\"").append("=").append(pkField.getFieldValue());
+        logger.info("更新对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString());
+        _setPsParam(1, ps, fields);
         return ps;
     }
 
     @Override
-    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) {
+    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) throws DBException, SQLException {
+
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE ");
+        sqlBuilder.append("\"").append(oi.getResource()).append("\"").append(" ");
+        sqlBuilder.append(" SET ");
+
+        int _index;
+        for (int i = 0; i < fields.size(); ++i) {
+            Field field = (Field) fields.get(i);
+            if (!field.isPk()) {
+                sqlBuilder.append("\"").append(field.getFieldName()).append("\"").append("=? ");
+                sqlBuilder.append(",");
+                _checkFieldLengthOverLimit(field);
+            }
+        }
+        sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(","));
+
+        if (condition != null) {
+            sqlBuilder.append(" WHERE ");
+            SqlServerConditionUtil.buildConditionSql(sqlBuilder, condition);
+        }
+
+        logger.info("更新对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString());
+        _index = _setPsParam(1, ps, fields);
+        SqlServerConditionUtil.buildConditionSqlPs(_index, ps, condition);
 
         return ps;
     }

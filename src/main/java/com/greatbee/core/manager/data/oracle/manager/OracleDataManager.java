@@ -636,7 +636,7 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
                 logger.info("查询对象SQL：" + sqlBuilder.toString());
                 ps = conn.prepareStatement(sqlBuilder.toString());
-                Condition.buildConditionSqlPs(1, ps, condition);
+                OracleConditionUtil.buildConditionSqlPs(1, ps, condition);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();

@@ -190,7 +190,7 @@ public abstract class DBManager implements ExceptionCode {
 
             try {
                 conn = _ds.getConnection();
-                handler.execute(conn, ps);
+                ps = handler.execute(conn, ps);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();

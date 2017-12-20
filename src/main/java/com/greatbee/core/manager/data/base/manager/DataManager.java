@@ -126,7 +126,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public int count(OI oi, Condition condition) throws DBException {
         return executCountQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
                 return buildingCountQuery(oi, condition, conn, ps);
             }
         });
@@ -183,7 +183,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Field pkField) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
                 return buildingDeleteQuery(oi, pkField, conn, ps);
             }
         });
@@ -193,7 +193,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Condition condition) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
                 return buildingDeleteQuery(oi, condition, conn, ps);
             }
         });
@@ -229,7 +229,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void update(OI oi, List<Field> fields, Field pkField) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws DBException, SQLException {
                 return buildingUpdateQuery(oi, fields, pkField, conn, ps);
             }
         });
@@ -239,7 +239,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void update(OI oi, List<Field> fields, Condition condition) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws DBException, SQLException {
                 return buildingUpdateQuery(oi, fields, condition, conn, ps);
             }
         });
@@ -257,7 +257,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     public abstract PreparedStatement buildingListQuery(ConnectorTree connectorTree, Connection conn, PreparedStatement ps) throws SQLException;
 
-    public abstract PreparedStatement buildingCountQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingCountQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
 
     public abstract PreparedStatement buildingCountQuery(ConnectorTree connectorTree, Connection conn, PreparedStatement ps) throws SQLException;
 
@@ -265,17 +265,17 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     public abstract PreparedStatement buildingListQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
 
-    public abstract PreparedStatement buildingPageQuery(OI oi, List<Field> fields, int page, int pageSize, Condition condition, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingPageQuery(OI oi, List<Field> fields, int page, int pageSize, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
 
     public abstract void buildingDataObject(ResultSet rs, List<Field> fields, Data data) throws SQLException;
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
 
     public abstract String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps);
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException;
 
-    public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws DBException, SQLException;
 
-    public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps);
+    public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) throws DBException, SQLException;
 }

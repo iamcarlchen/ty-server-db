@@ -196,8 +196,8 @@ public class SqlServerBuildUtils {
 
         ConnectorTree childTree;
         if (CollectionUtil.isValid(currentCont.getChildren())) {
-            for (Iterator var3 = currentCont.getChildren().iterator(); var3.hasNext(); index = buildTreeConditionPs(index, ps, childTree)) {
-                childTree = (ConnectorTree) var3.next();
+            for (Iterator iterator = currentCont.getChildren().iterator(); iterator.hasNext(); index = buildTreeConditionPs(index, ps, childTree)) {
+                childTree = (ConnectorTree) iterator.next();
             }
         }
 
