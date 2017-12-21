@@ -245,7 +245,7 @@ public class SQLServerDataManagerV2 extends DataManager {
         sqlBuilder.append(" FROM \"").append(oi.getResource()).append("\" ");
         if (condition != null) {
             sqlBuilder.append(" WHERE ");
-            OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
+            SqlServerConditionUtil.buildConditionSql(sqlBuilder, condition);
         }
         logger.info("查询对象SQL：" + sqlBuilder.toString());
         ps = conn.prepareStatement(sqlBuilder.toString());
@@ -343,7 +343,7 @@ public class SQLServerDataManagerV2 extends DataManager {
         sqlBuilder.append(oi.getResource()).append("\" ");
         if (condition != null) {
             sqlBuilder.append(" WHERE ");
-            OracleConditionUtil.buildConditionSql(sqlBuilder, condition);
+            SqlServerConditionUtil.buildConditionSql(sqlBuilder, condition);
         }
 
         logger.info("查询对象SQL：" + sqlBuilder.toString());
