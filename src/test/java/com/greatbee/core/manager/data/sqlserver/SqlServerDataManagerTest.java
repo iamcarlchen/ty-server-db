@@ -27,6 +27,8 @@ import java.util.List;
  */
 public class SqlServerDataManagerTest extends DataManagerTest implements DataManagerTestCase {
 
+    private final static String TEST_USER_TABLE = "ty_test_user";
+
     @Override
     public void initSchema(Connection conn, PreparedStatement ps) throws DBException, SQLException {
         this.dropSchema(conn, ps);
@@ -50,19 +52,19 @@ public class SqlServerDataManagerTest extends DataManagerTest implements DataMan
     }
 
     public void dropSchema(Connection conn, PreparedStatement ps) throws SQLException {
-        System.out.println("drop schema ty_test_user");
+        System.out.println("drop schema " + TEST_USER_TABLE);
         StringBuilder schemaBuilder = new StringBuilder();
-        schemaBuilder.append("IF EXISTS (  ").append("SELECT * FROM sys.objects   WHERE name = N'").append("ty_test_user").append("'").append(")\n");
-        schemaBuilder.append("DROP TABLE ty_test_user \n");
+        schemaBuilder.append("IF EXISTS (  ").append("SELECT * FROM sys.objects   WHERE name = N'").append(TEST_USER_TABLE).append("'").append(")\n");
+        schemaBuilder.append("DROP TABLE " + TEST_USER_TABLE + " \n");
         ps = conn.prepareStatement(schemaBuilder.toString());
         ps.execute();
-        System.out.println("drop schema ty_test_user done!");
+        System.out.println("drop schema " + TEST_USER_TABLE + " done!");
     }
 
     public void createSchema(Connection conn, PreparedStatement ps) throws SQLException {
-        System.out.println("create schema ty_test_user");
+        System.out.println("create schema " + TEST_USER_TABLE);
         StringBuilder schemaBuilder = new StringBuilder();
-        schemaBuilder.append("create table ty_test_user (");
+        schemaBuilder.append("create table " + TEST_USER_TABLE + " (");
         schemaBuilder.append("  \"id\" int identity(1,1) primary key,");
         schemaBuilder.append("  \"name\" varchar(64) unique  not null,");
         schemaBuilder.append("  \"alias\" varchar(64) not null,");
@@ -76,10 +78,10 @@ public class SqlServerDataManagerTest extends DataManagerTest implements DataMan
     }
 
     public void insertTestData(Connection conn, PreparedStatement ps) throws SQLException {
-        System.out.println("insert data into ty_test_user");
+        System.out.println("insert data into " + TEST_USER_TABLE);
         for (int i = 1; i < 100; i++) {
             StringBuilder schemaBuilder = new StringBuilder();
-            schemaBuilder.append("INSERT INTO ty_test_user VALUES ('test_user_" + i + "','user" + i + "','" + RandomGUIDUtil.getRawGUID() + "'," + i + ",'" + RandomGUIDUtil.getRawGUID() + "')");
+            schemaBuilder.append("INSERT INTO ").append(TEST_USER_TABLE).append(" VALUES ('test_user_" + i + "','user" + i + "','" + RandomGUIDUtil.getRawGUID() + "'," + i + ",'" + RandomGUIDUtil.getRawGUID() + "')");
             ps = conn.prepareStatement(schemaBuilder.toString());
             ps.executeUpdate();
         }
@@ -104,7 +106,7 @@ public class SqlServerDataManagerTest extends DataManagerTest implements DataMan
         if (oiViews != null) {
             //选择测试用的OI
             for (OIView item : oiViews) {
-                if (item.getOi().getAlias().startsWith("test")) {
+                if (item.getOi().getAlias().equalsIgnoreCase(TEST_USER_TABLE)) {
                     oiView = item;
                 }
             }

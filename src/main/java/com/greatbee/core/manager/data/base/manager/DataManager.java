@@ -271,7 +271,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
 
-    public abstract String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps);
+    public abstract String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
     public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException;
 

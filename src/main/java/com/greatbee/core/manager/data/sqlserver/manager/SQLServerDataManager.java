@@ -353,8 +353,51 @@ public class SQLServerDataManager extends DataManager {
     }
 
     @Override
-    public String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) {
-        return null;
+    public String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) throws SQLException, DBException {
+
+        StringBuilder sqlBuilder = new StringBuilder("INSERT INTO \"");
+        sqlBuilder.append(oi.getResource()).append("\" (");
+        StringBuilder valueStr = new StringBuilder();
+        List<Field> createFields = new ArrayList<Field>();
+
+        int id = 0;
+        for (int i = 0; i < fields.size(); ++i) {
+            Field field = (Field) fields.get(i);
+//            if (i > 0) {
+//                sqlBuilder.append(",");
+//                valueStr.append(",");
+//            }
+
+            if (field.isPk() && (field.getDt().equalsIgnoreCase(DT.INT.getType()) || field.getDt().equalsIgnoreCase(DT.Double.getType()))) {
+
+            } else {
+                sqlBuilder.append("\"").append(field.getFieldName()).append("\"");
+                valueStr.append(" ? ");
+                createFields.add(field);
+                sqlBuilder.append(",");
+                valueStr.append(",");
+            }
+            _checkFieldLengthOverLimit(field);
+        }
+        sqlBuilder.deleteCharAt(sqlBuilder.lastIndexOf(","));
+        valueStr.deleteCharAt(valueStr.lastIndexOf(","));
+
+
+        sqlBuilder.append(") VALUES(");
+        sqlBuilder.append(valueStr);
+        sqlBuilder.append(")");
+        logger.info("创建对象SQL：" + sqlBuilder.toString());
+        ps = conn.prepareStatement(sqlBuilder.toString(), 1);
+        _setPsParam(1, ps, createFields);
+
+        ps.executeUpdate();
+        ResultSet rs = ps.getGeneratedKeys();
+        id = 0;
+        if (rs.next()) {
+            id = rs.getInt(1);
+        }
+
+        return String.valueOf(id);
     }
 
     @Override
