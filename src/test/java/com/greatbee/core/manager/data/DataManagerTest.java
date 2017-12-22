@@ -7,9 +7,7 @@ import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.manager.data.sqlserver.manager.SQLServerDataManagerV2;
 import com.greatbee.core.manager.data.util.DataSourceUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
