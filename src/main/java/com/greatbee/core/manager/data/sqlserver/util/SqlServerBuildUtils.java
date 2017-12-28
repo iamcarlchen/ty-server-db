@@ -1,6 +1,7 @@
 package com.greatbee.core.manager.data.sqlserver.util;
 
 import com.greatbee.base.util.CollectionUtil;
+import com.greatbee.base.util.RandomGUIDUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.ConT;
 import com.greatbee.core.bean.constant.Order;
@@ -76,7 +77,7 @@ public class SqlServerBuildUtils {
 
             String fieldAlias;
             if (CollectionUtil.isValid(gb)) {
-                for (Iterator childTree = gb.entrySet().iterator(); childTree.hasNext(); sql.append(" AS \"").append(fieldAlias).append("\"")) {
+                for (Iterator childTree = gb.entrySet().iterator(); childTree.hasNext(); sql.append(" AS \"").append(sql.indexOf("AS \"" + fieldAlias + "\"") < 0 ? fieldAlias : fieldAlias + "_" + prevCont.getConnector().getToOIAlias()).append("\"")) {
                     Map.Entry items = (Map.Entry) childTree.next();
                     Field itemsValue = (Field) items.getValue();
                     fieldAlias = (String) items.getKey();
@@ -97,7 +98,8 @@ public class SqlServerBuildUtils {
             if (prevCont == null) {
                 sql.append(" FROM \"").append(currentCont.getOi().getResource()).append("\"").append(" ").append(currentCont.getConnectorId()).append(" ");
             } else {
-                Connector currentContConnector = currentCont.getConnector();
+//                Connector currentContConnector = currentCont.getConnector();
+                Connector currentContConnector = currentCont.getConnector() != null ? currentCont.getConnector() : new Connector();
                 sql.append(ConT.getSqlJoinType(currentCont.getConT()));
                 sql.append("\"").append(currentCont.getOi().getResource()).append("\"").append("   ").append(currentCont.getConnectorId()).append(" ");
                 sql.append(" ON ").append(prevCont.getConnectorId()).append(".\"").append(currentContConnector.getFromFieldName()).append("\"=");
@@ -137,7 +139,13 @@ public class SqlServerBuildUtils {
             } else {
                 //执行默认排序
                 Map<String, Field> fieldMap = currentCont.getFields();
-                sql.append(" ORDER BY ");
+                //TODO:BUG FIX 多个order的问题
+                if (sql.lastIndexOf("ORDER BY") < 0) {
+                    sql.append(" ORDER BY ");
+                } else {
+                    sql.append(" , ");
+                }
+
                 int orderByCount = 0;
                 for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
                     Field item = entry.getValue();
@@ -202,21 +210,5 @@ public class SqlServerBuildUtils {
         }
 
         return index;
-    }
-
-    public static final void buildAllFields(ConnectorTree cont, Map<String, Field> map) {
-        if (CollectionUtil.isValid(cont.getFields())) {
-            map.putAll(cont.getFields());
-        }
-
-        if (CollectionUtil.isValid(cont.getChildren())) {
-            Iterator var2 = cont.getChildren().iterator();
-
-            while (var2.hasNext()) {
-                ConnectorTree childTree = (ConnectorTree) var2.next();
-                buildAllFields(childTree, map);
-            }
-        }
-
     }
 }

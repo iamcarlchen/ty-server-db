@@ -45,8 +45,6 @@ public class SQLServerDataManager extends DataManager {
             conn = DataSourceUtils.getDatasource(ds).getConnection();
             DatabaseMetaData metaData = conn.getMetaData();
             String schemaName = ds.getConnectionUrl().split("=")[ds.getConnectionUrl().split("=").length - 1];
-//            ResultSet rs = e.getTables((String) null, (String) null, "", new String[]{"TABLE"});
-//            String schemaName = ds.getName().toUpperCase();
             logger.info("exportFromPhysicsDS from " + schemaName);
             ResultSet rs = metaData.getTables(schemaName, null, null, new String[]{"TABLE"});
             dsView.setDs(ds);
