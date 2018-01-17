@@ -12,8 +12,8 @@ import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.sqlserver.testcase.*;
-import com.greatbee.core.manager.data.DataManagerTest;
-import com.greatbee.core.manager.data.DataManagerTestCase;
+import com.greatbee.core.db.DataManagerTest;
+import com.greatbee.core.db.DataManagerTestCase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

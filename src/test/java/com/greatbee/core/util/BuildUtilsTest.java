@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.utils;
+package com.greatbee.core.util;
 
 import com.greatbee.core.bean.view.ConnectorTree;
 import junit.framework.TestCase;

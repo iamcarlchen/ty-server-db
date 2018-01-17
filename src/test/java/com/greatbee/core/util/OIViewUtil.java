@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.utils;
+package com.greatbee.core.util;
 
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.view.OIView;

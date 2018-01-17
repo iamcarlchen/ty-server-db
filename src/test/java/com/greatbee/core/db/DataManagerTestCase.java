@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.data;
+package com.greatbee.core.db;
 
 import com.greatbee.base.bean.DBException;
 

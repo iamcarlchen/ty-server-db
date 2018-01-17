@@ -6,7 +6,7 @@ import com.greatbee.core.bean.oi.Connector;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.db.RelationalDataManager;
-import com.greatbee.core.manager.utils.ConnectorTreeUtil;
+import com.greatbee.core.util.ConnectorTreeUtil;
 
 import java.util.ArrayList;
 import java.util.List;

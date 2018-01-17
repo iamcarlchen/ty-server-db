@@ -1,4 +1,4 @@
-package com.greatbee.core.manager.data.mysql;
+package com.greatbee.core.db.mysql;
 
 import com.alibaba.fastjson.JSON;
 import com.greatbee.TYBaseTest;
