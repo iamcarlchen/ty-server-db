@@ -7,6 +7,9 @@ import com.greatbee.base.bean.DataPage;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.view.DiffItem;
+
+import java.util.List;
 
 /**
  * 关系型数据管理
@@ -14,6 +17,15 @@ import com.greatbee.core.bean.view.DSView;
  * Created by CarlChen on 2017/5/24.
  */
 public interface RelationalDataManager extends DataManager {
+    /**
+     * TY配置DS与物理的DS进行比较，把差异列表返回
+     *
+     * @param ds
+     * @return
+     * @throws DBException
+     */
+    public List<DiffItem> diff(DS ds) throws DBException;
+
     /**
      * 从物理数据库中导出OIView
      *

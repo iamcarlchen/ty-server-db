@@ -12,10 +12,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.view.Condition;
-import com.greatbee.core.bean.view.ConnectorTree;
-import com.greatbee.core.bean.view.DSView;
-import com.greatbee.core.bean.view.OIView;
+import com.greatbee.core.bean.view.*;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.util.BuildUtils;
@@ -45,6 +42,19 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
      */
     @Autowired
     private DSManager dsManager;
+
+    /**
+     * TY配置DS与物理的DS进行比较，把差异列表返回
+     *
+     * @param ds
+     * @return
+     * @throws DBException
+     */
+    @Override
+    public List<DiffItem> diff(DS ds) throws DBException {
+        //TODO
+        return null;
+    }
 
     public Data read(OI oi, List<Field> fields, Field pkField) throws DBException {
 
