@@ -1,8 +1,8 @@
 package com.greatbee.core.manager.data.util;
 
 import com.greatbee.base.bean.DBException;
-import com.greatbee.core.manager.data.bean.constant.DSCF;
-import com.greatbee.core.manager.data.bean.constant.DST;
+import com.greatbee.core.bean.constant.DSCF;
+import com.greatbee.core.bean.constant.DST;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.utils.RedisBuildUtil;
