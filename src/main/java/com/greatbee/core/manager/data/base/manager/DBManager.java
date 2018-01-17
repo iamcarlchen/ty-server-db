@@ -12,8 +12,8 @@ import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.base.manager.handler.DataHandler;
 import com.greatbee.core.manager.data.base.manager.handler.QueryHandler;
-import com.greatbee.core.manager.data.util.DataSourceUtils;
-import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.greatbee.core.manager.utils.DataSourceUtils;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
@@ -31,7 +31,7 @@ import java.util.*;
  */
 public abstract class DBManager implements ExceptionCode {
 
-    private LoggerUtil logger = new LoggerUtil(DBManager.class);
+    private static Logger logger = Logger.getLogger(DBManager.class);
 
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection
