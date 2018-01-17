@@ -6,8 +6,9 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.manager.utils.DataSourceUtils;
+import com.greatbee.core.util.DataSourceUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

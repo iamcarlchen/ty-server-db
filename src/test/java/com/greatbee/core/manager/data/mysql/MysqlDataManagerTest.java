@@ -8,10 +8,13 @@ import com.greatbee.base.bean.DataList;
 import com.greatbee.base.bean.DataPage;
 import com.greatbee.base.util.DataUtil;
 import com.greatbee.core.bean.constant.*;
-import com.greatbee.core.bean.oi.*;
+import com.greatbee.core.bean.oi.Connector;
+import com.greatbee.core.bean.oi.DS;
+import com.greatbee.core.bean.oi.Field;
+import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.*;
+import com.greatbee.core.db.mysql.MysqlDataManager;
 import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.manager.data.ext.MysqlDataManager;
 
 import java.util.*;
 

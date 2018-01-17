@@ -6,7 +6,7 @@ import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.view.OIView;
-import com.greatbee.core.manager.data.RelationalDataManager;
+import com.greatbee.core.db.RelationalDataManager;
 
 import java.util.List;
 
