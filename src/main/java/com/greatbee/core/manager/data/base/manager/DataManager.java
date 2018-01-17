@@ -16,9 +16,9 @@ import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
 import com.greatbee.core.manager.data.base.manager.handler.DataHandler;
 import com.greatbee.core.manager.data.base.manager.handler.QueryHandler;
-import com.greatbee.core.manager.data.util.DataSourceUtils;
-import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.greatbee.core.manager.utils.DataSourceUtils;
 import com.greatbee.core.manager.utils.BuildUtils;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
@@ -33,7 +33,7 @@ import java.util.*;
  */
 public abstract class DataManager extends DBManager implements RelationalDataManager {
 
-    private LoggerUtil logger = new LoggerUtil(DataManager.class);
+    private static Logger logger = Logger.getLogger(DataManager.class);
 
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection

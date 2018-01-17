@@ -17,8 +17,8 @@ import com.greatbee.core.manager.data.oracle.util.OracleBuildUtils;
 import com.greatbee.core.manager.data.oracle.util.OracleConditionUtil;
 import com.greatbee.core.manager.data.sqlserver.util.SqlServerBuildUtils;
 import com.greatbee.core.manager.data.sqlserver.util.SqlServerConditionUtil;
-import com.greatbee.core.manager.data.util.DataSourceUtils;
-import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.greatbee.core.manager.utils.DataSourceUtils;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class SQLServerDataManager extends DataManager {
 
-    private LoggerUtil logger = new LoggerUtil(SQLServerDataManager.class);
+    private static Logger logger = Logger.getLogger(SQLServerDataManager.class);
 
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {

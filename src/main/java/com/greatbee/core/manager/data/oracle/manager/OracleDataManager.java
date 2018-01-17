@@ -19,11 +19,11 @@ import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.manager.data.RelationalDataManager;
-import com.greatbee.core.manager.data.util.DataSourceUtils;
-import com.greatbee.core.manager.data.util.LoggerUtil;
+import com.greatbee.core.manager.utils.DataSourceUtils;
 import com.greatbee.core.manager.data.oracle.util.OracleBuildUtils;
 import com.greatbee.core.manager.data.oracle.util.OracleConditionUtil;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
@@ -38,8 +38,7 @@ import java.util.*;
  * Date: 2017/11/18
  */
 public class OracleDataManager implements RelationalDataManager, ExceptionCode {
-    //    private static Logger logger = Logger.getLogger(OracleDataManager.class);
-    private LoggerUtil logger = new LoggerUtil(OracleDataManager.class);
+    private static Logger logger = Logger.getLogger(OracleDataManager.class);
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection
      */
