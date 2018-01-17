@@ -109,58 +109,83 @@ public class OracleConditionUtil {
 
     public static void buildCriteriaCondition(Class beanClass, Criteria c, Junction junction, Condition condition) {
         if (condition != null) {
-            List conditions = condition.getConditions();
+
+            List<Condition> conditions = condition.getConditions();
             if (conditions != null) {
-                Object junc = null;
+                Junction junc = null;
                 if (CG.AND.equals(condition.getCg())) {
                     junc = Restrictions.conjunction();
                 } else {
                     junc = Restrictions.disjunction();
                 }
-
-                for (int i = 0; i < conditions.size(); ++i) {
-                    Condition _condition = (Condition) conditions.get(i);
-                    buildCriteriaCondition(beanClass, c, (Junction) junc, _condition);
+                //muliCondition
+                for (int i = 0; i < conditions.size(); i++) {
+                    Condition _condition = conditions.get(i);
+                    buildCriteriaCondition(beanClass, c, junc, _condition);
                 }
-
                 if (junction == null) {
-                    c.add((Criterion) junc);
+                    c.add(junc);
                 } else {
-                    junction.add((Criterion) junc);
+                    junction.add(junc);
                 }
-            } else if (junction == null) {
-                c.add(_transferJunction(beanClass, condition));
             } else {
-                junction.add(_transferJunction(beanClass, condition));
+                //Condition
+                if (junction == null) {
+                    c.add(_transferJunction(beanClass, condition));
+                } else {
+                    junction.add(_transferJunction(beanClass, condition));
+                }
             }
         }
 
     }
 
     private static Criterion _transferJunction(Class beanClass, Condition condition) {
-        return (Criterion) (CT.EQ.getName().equals(condition.getCt()) ? Restrictions.eq(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.GT.getName().equals(condition.getCt()) ? Restrictions.gt(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.GE.getName().equals(condition.getCt()) ? Restrictions.ge(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.LT.getName().equals(condition.getCt()) ? Restrictions.lt(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.LE.getName().equals(condition.getCt()) ? Restrictions.le(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.NEQ.getName().equals(condition.getCt()) ? Restrictions.ne(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)) : (CT.IN.getName().equals(condition.getCt()) ? Restrictions.in(condition.getConditionFieldName(), condition.getConditionFieldValue().split(",")) : (CT.NOTIN.getName().equals(condition.getCt()) ? Restrictions.not(Restrictions.in(condition.getConditionFieldName(), condition.getConditionFieldValue().split(","))) : (CT.LIKE.getName().equals(condition.getCt()) ? Restrictions.like(condition.getConditionFieldName(), "%" + condition.getConditionFieldValue() + "%") : (CT.LeftLIKE.getName().equals(condition.getCt()) ? Restrictions.like(condition.getConditionFieldName(), "%" + condition.getConditionFieldValue()) : (CT.RightLIKE.getName().equals(condition.getCt()) ? Restrictions.like(condition.getConditionFieldName(), condition.getConditionFieldValue() + "%") : (CT.NULL.getName().equals(condition.getCt()) ? Restrictions.isNull(condition.getConditionFieldName()) : (CT.ISNOT.getName().equals(condition.getCt()) ? Restrictions.isNotNull(condition.getConditionFieldName()) : Restrictions.eq(condition.getConditionFieldName(), _getConditionValue(beanClass, condition)))))))))))))));
+        if (CT.EQ.getName().equals(condition.getCt())) {
+            return Restrictions.eq(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.GT.getName().equals(condition.getCt())) {
+            return Restrictions.gt(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.GE.getName().equals(condition.getCt())) {
+            return Restrictions.ge(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.LT.getName().equals(condition.getCt())) {
+            return Restrictions.lt(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.LE.getName().equals(condition.getCt())) {
+            return Restrictions.le(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.NEQ.getName().equals(condition.getCt())) {
+            return Restrictions.ne(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        } else if (CT.IN.getName().equals(condition.getCt())) {
+            return Restrictions.in(condition.getConditionFieldName(), condition.getConditionFieldValue().split(","));
+        } else if (CT.NOTIN.getName().equals(condition.getCt())) {
+            return Restrictions.not(Restrictions.in(condition.getConditionFieldName(), condition.getConditionFieldValue().split(",")));
+        } else if (CT.LIKE.getName().equals(condition.getCt())) {
+            return Restrictions.like(condition.getConditionFieldName(), "%" + condition.getConditionFieldValue() + "%");
+        } else if (CT.LeftLIKE.getName().equals(condition.getCt())) {
+            return Restrictions.like(condition.getConditionFieldName(), "%" + condition.getConditionFieldValue());
+        } else if (CT.RightLIKE.getName().equals(condition.getCt())) {
+            return Restrictions.like(condition.getConditionFieldName(), condition.getConditionFieldValue() + "%");
+        } else if (CT.NULL.getName().equals(condition.getCt())) {
+            return Restrictions.isNull(condition.getConditionFieldName());
+        } else if (CT.ISNOT.getName().equals(condition.getCt())) {
+            return Restrictions.isNotNull(condition.getConditionFieldName());
+        } else {
+            return Restrictions.eq(condition.getConditionFieldName(), _getConditionValue(beanClass, condition));
+        }
+        //TODO is   和 isnot   没有转换
     }
 
     private static Object _getConditionValue(Class beanClass, Condition condition) {
         Field[] fs = beanClass.getDeclaredFields();
-        int i = 0;
-
-        while (true) {
-            if (i < fs.length) {
-                Field f = fs[i];
-                String name = f.getName();
-                Class type = f.getType();
-                if (!StringUtil.isValid(condition.getConditionFieldName()) || !name.equals(condition.getConditionFieldName())) {
-                    ++i;
-                    continue;
+        for (int i = 0; i < fs.length; i++) {
+            Field f = fs[i];
+            String name = f.getName();
+            Class type = f.getType();
+            if (StringUtil.isValid(condition.getConditionFieldName()) && name.equals(condition.getConditionFieldName())) {
+                if (Boolean.class.equals(type) || boolean.class.equals(type)) {
+                    return BooleanUtil.toBool(condition.getConditionFieldValue());
                 }
-
-                if (Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
-                    return Boolean.valueOf(BooleanUtil.toBool(condition.getConditionFieldValue()));
-                }
+                break;
             }
-
-            return condition.getConditionFieldValue();
         }
+        return condition.getConditionFieldValue();
     }
 }
