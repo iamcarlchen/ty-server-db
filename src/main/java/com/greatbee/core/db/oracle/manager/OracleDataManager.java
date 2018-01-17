@@ -42,18 +42,6 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
     @Autowired
     private DSManager dsManager;
 
-    /**
-     * TY配置DS与物理的DS进行比较，把差异列表返回
-     *
-     * @param ds
-     * @return
-     * @throws DBException
-     */
-    @Override
-    public List<DiffItem> diff(DS ds) throws DBException {
-        //TODO
-        return null;
-    }
 
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
