@@ -282,7 +282,7 @@ public class SqlServerDataManagerTest extends DataManagerTest implements DataMan
      * @throws DBException
      */
     public void test2TablePageByConnectorTree() throws DBException {
-        new PageByConnectorTree(TEST_USER_OIVIEW,TEST_ACCOUNT_OIVIEW, dataManager);
+        new PageByConnectorTree(TEST_USER_OIVIEW, TEST_ACCOUNT_OIVIEW, dataManager);
     }
 
     /**
@@ -291,7 +291,7 @@ public class SqlServerDataManagerTest extends DataManagerTest implements DataMan
      * @throws DBException
      */
     public void test2TableReadByConnectorTree() throws DBException {
-        new ReadByConnectorTree(TEST_USER_OIVIEW, dataManager);
+        new ReadByConnectorTree(TEST_USER_OIVIEW, TEST_ACCOUNT_OIVIEW, dataManager);
     }
 
     //=======================================更新数据=======================================
