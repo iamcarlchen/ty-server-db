@@ -10,9 +10,9 @@ import com.greatbee.base.bean.ext.SimpleIND;
  * Created by CarlChen on 16/10/11.
  */
 public class OI extends SimpleIND implements IND, AliasBean {
+    //资源地址，针对Mysql就是表名，针对Rest API就是content path，如果是LocalStorage，则是文件夹
     //别名
     private String alias;
-    //资源地址，针对Mysql就是表名，针对Rest API就是content path，如果是LocalStorage，则是文件夹
     // /pic
     private String resource;
     //所属数据源别名

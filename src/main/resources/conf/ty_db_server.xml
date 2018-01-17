@@ -5,7 +5,7 @@
        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
     <!-- Mysql Data Manager-->
-    <bean id="mysqlDataManager" class="com.greatbee.core.db.mysql.MysqlDataManager"/>
+    <bean id="mysqlDataManager" class="com.greatbee.core.db.mysql.manager.MysqlDataManager"/>
 
     <!-- Oracle Data Manager-->
     <bean id="oracleDataManager" class="com.greatbee.core.db.oracle.manager.OracleDataManager"/>

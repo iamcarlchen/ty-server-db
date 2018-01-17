@@ -13,7 +13,7 @@ import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.*;
-import com.greatbee.core.db.mysql.MysqlDataManager;
+import com.greatbee.core.db.mysql.manager.MysqlDataManager;
 import com.greatbee.core.manager.DSManager;
 
 import java.util.*;
