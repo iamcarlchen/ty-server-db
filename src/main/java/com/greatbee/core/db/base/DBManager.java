@@ -12,7 +12,7 @@ import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.handler.DataHandler;
 import com.greatbee.core.handler.QueryHandler;
-import com.greatbee.core.manager.utils.DataSourceUtils;
+import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -54,11 +54,11 @@
     </parent> -->
 
     <dependencies>
-        <!-- TY Server Core-->
+        <!-- TY Server Base-->
         <dependency>
             <groupId>greatbee</groupId>
-            <artifactId>ty-server-core</artifactId>
-            <version>1.0.104</version>
+            <artifactId>ty-server-base</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <dependency>

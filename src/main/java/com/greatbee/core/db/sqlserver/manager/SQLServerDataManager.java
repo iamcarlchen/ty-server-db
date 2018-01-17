@@ -17,7 +17,7 @@ import com.greatbee.core.db.oracle.util.OracleBuildUtils;
 import com.greatbee.core.db.oracle.util.OracleConditionUtil;
 import com.greatbee.core.db.sqlserver.util.SqlServerBuildUtils;
 import com.greatbee.core.db.sqlserver.util.SqlServerConditionUtil;
-import com.greatbee.core.manager.utils.DataSourceUtils;
+import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
 
 import java.sql.*;

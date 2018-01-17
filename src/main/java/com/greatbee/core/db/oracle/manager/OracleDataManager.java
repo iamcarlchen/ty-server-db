@@ -18,8 +18,8 @@ import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.manager.data.RelationalDataManager;
-import com.greatbee.core.manager.utils.DataSourceUtils;
+import com.greatbee.core.db.RelationalDataManager;
+import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.db.oracle.util.OracleBuildUtils;
 import com.greatbee.core.db.oracle.util.OracleConditionUtil;
 
