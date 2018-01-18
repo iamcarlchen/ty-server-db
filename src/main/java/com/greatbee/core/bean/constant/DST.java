@@ -30,4 +30,20 @@ public enum DST {
     public String getType() {
         return type;
     }
+
+    /**
+     * GET DST
+     *
+     * @param type
+     * @return
+     */
+    public static final DST getDST(String type) {
+        DST[] arr = DST.values();
+        for (DST dst : arr) {
+            if (dst.getType().equalsIgnoreCase(type)) {
+                return dst;
+            }
+        }
+        return null;
+    }
 }

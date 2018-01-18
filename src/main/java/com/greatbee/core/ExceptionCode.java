@@ -33,6 +33,7 @@ public interface ExceptionCode {
     public static final long ERROR_DB_PS_CLOSE_ERROR = 200006;//关闭preparestatment错误
     public static final long ERROR_DB_RS_CLOSE_ERROR = 200007;//关闭Resultset错误
     public static final long ERROR_DB_CONT_IS_NULL = 200008;//链接查询connector为空
+    public static final long ERROR_DB_DST_NOT_SUPPORT = 200009;//数据源类型不支持
 
     //Lego的相关异常Code以3开头
     public static final long ERROR_LEGO_ADD = 300001;
