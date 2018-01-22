@@ -34,6 +34,12 @@ public interface ExceptionCode {
     public static final long ERROR_DB_RS_CLOSE_ERROR = 200007;//关闭Resultset错误
     public static final long ERROR_DB_CONT_IS_NULL = 200008;//链接查询connector为空
     public static final long ERROR_DB_DST_NOT_SUPPORT = 200009;//数据源类型不支持
+    public static final long ERROR_DB_OI_INVAlID = 200010;//OI为空
+    public static final long ERROR_DB_OI_DS_INVAlID = 200011;//OI的DS为空
+    public static final long ERROR_DB_OI_ALIAS_INVAlID = 200012;//OI的Alias为空
+    public static final long ERROR_DB_OIView_INVAlID = 200013;//OIView为空
+    public static final long ERROR_DB_FIELD_NOT_EXIST = 200014;//字段不存在为空
+    public static final long ERROR_DB_FIELD_EXIST = 200015;//字段已存在
 
     //Lego的相关异常Code以3开头
     public static final long ERROR_LEGO_ADD = 300001;

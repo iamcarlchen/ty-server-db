@@ -13,10 +13,13 @@ import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.*;
+import com.greatbee.core.db.SchemaDataManager;
+import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.util.BuildUtils;
 import com.greatbee.core.util.DataSourceUtils;
+import com.greatbee.core.util.OIUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,7 +36,7 @@ import java.util.Map;
  * <p>
  * Created by CarlChen on 2016/12/19.
  */
-public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
+public class MysqlDataManager implements RelationalDataManager, SchemaDataManager, ExceptionCode {
 
     private static Logger logger = Logger.getLogger(MysqlDataManager.class);
 
@@ -715,34 +718,6 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
         _setPsParam(index, ps, fields);
     }
 
-    /**
-     * java.sql.Types类型转换成DT类型
-     *
-     * @param type
-     * @return
-     * @throws Exception
-     */
-    private static String _transferMysqlTypeToTySqlType(int type, int colSize) {
-        if (type == Types.INTEGER || (type == Types.TINYINT && colSize > 4) || type == Types.BIT || type == Types.BIGINT) {
-            return DT.INT.getType();
-        } else if (type == Types.DOUBLE || type == Types.DECIMAL) {
-            return DT.Double.getType();
-        } else if (type == Types.BOOLEAN || (type == Types.TINYINT && colSize <= 4)) {
-            return DT.Boolean.getType();
-        } else if (type == Types.VARCHAR || type == Types.LONGVARCHAR || type == Types.NVARCHAR || type == Types.LONGNVARCHAR || type == Types.CLOB || type == Types.CHAR) {
-            return DT.String.getType();
-        } else if (type == Types.DATE) {
-            return DT.Date.getType();
-        } else if (type == Types.TIME || type == Types.TIMESTAMP) {
-            return DT.Time.getType();
-        } else if (type == Types.JAVA_OBJECT) {
-            return DT.Object.getType();
-        } else if (type == Types.ARRAY) {
-            return DT.Array.getType();
-        } else {
-            return "";
-        }
-    }
 
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
@@ -781,7 +756,7 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
                         remarks = colName;
                     }
                     field.setName(colName);
-                    field.setDt(_transferMysqlTypeToTySqlType(dataType, colSize));
+                    field.setDt(MysqlSchemaUtil.transferMysqlTypeToTySqlType(dataType, colSize));
                     field.setFieldName(colName);
                     field.setOiAlias(oi.getAlias());
                     field.setFieldLength(colSize);
@@ -961,13 +936,13 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
             //是否有group by 的组数计算,如果是有group by 总数需要再套一层
             boolean hasGroupBy = BuildUtils.checkGroupBy(cont);
             StringBuilder sql = new StringBuilder("SELECT count(*) ");
-            if(hasGroupBy){
+            if (hasGroupBy) {
                 sql.append(" FROM (SELECT count(*) ");
             }
             sql.append(BuildUtils.buildConnector(cont));
             sql.append(BuildUtils.buildCondition(cont));
             sql.append(BuildUtils.buildGroupBy(cont));
-            if(hasGroupBy){
+            if (hasGroupBy) {
                 sql.append(" ) as tmpTb");
             }
 
@@ -1047,9 +1022,9 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
             while (rs.next()) {
                 Data item = new Data();
                 for (Map.Entry<String, Field> entry : map.entrySet()) {
-                    String _dt=DT.String.getType();
-                    if(entry.getValue()!=null){
-                        _dt= entry.getValue().getDt();
+                    String _dt = DT.String.getType();
+                    if (entry.getValue() != null) {
+                        _dt = entry.getValue().getDt();
                     }
                     if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
                         item.put(entry.getKey(), rs.getBoolean(entry.getKey()));
@@ -1138,7 +1113,7 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
 
                 for (Map.Entry<String, Field> entry : map.entrySet()) {
                     String _dt = DT.String.getType();
-                    if(entry.getValue()!=null){
+                    if (entry.getValue() != null) {
                         _dt = entry.getValue().getDt();
                     }
                     if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
@@ -1317,4 +1292,102 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
         return sql.toString();
     }
 
+    @Override
+    public List<DiffItem> diff(DS ds) throws DBException {
+        return null;
+    }
+
+    @Override
+    public void createTable(OI oi) throws DBException {
+        OIUtils.isValid(oi);
+
+    }
+
+    @Override
+    public void dropTable(OI oi) throws DBException {
+        OIUtils.isValid(oi);
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        Connection conn = null;
+        Statement ps = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            ps = conn.createStatement();
+            String tableName = oi.getResource();
+            if (_isTableExits(ds, tableName)) {
+                StringBuilder dropSQL = new StringBuilder();
+                dropSQL.append("DROP TABLE ");
+                dropSQL.append(tableName);
+                ps.addBatch(dropSQL.toString());
+            }
+            ps.executeBatch();//批量执行
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
+        } catch (DBException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), e.getCode());
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void addField(OI oi, Field field) throws DBException {
+        OIUtils.isValid(oi);
+        //读取之前schema
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIUtils.isViewValid(oiView);
+        //判断字段名称是否重复
+        if (OIUtils.hasViewField(oiView, field.getFieldName())) {
+            throw new DBException("字段已存在", ExceptionCode.ERROR_DB_FIELD_EXIST);
+        }
+        //添加字段
+
+    }
+
+    @Override
+    public void dropField(OI oi, Field field) throws DBException {
+        OIUtils.isValid(oi);
+        //读取之前schema
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIUtils.isViewValid(oiView);
+        //判断字段名称是否存在
+        if (!OIUtils.hasViewField(oiView, field.getFieldName())) {
+            throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
+        }
+        //删除字段
+        
+    }
+
+    @Override
+    public void updateField(OI oi, Field field) throws DBException {
+        OIUtils.isValid(oi);
+        //读取之前schema
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIUtils.isViewValid(oiView);
+        //判断字段名称是否存在
+        if (!OIUtils.hasViewField(oiView, field.getFieldName())) {
+            throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
+        }
+        //更新字段
+
+    }
 }
