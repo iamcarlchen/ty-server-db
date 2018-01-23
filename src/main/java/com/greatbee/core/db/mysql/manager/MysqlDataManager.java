@@ -12,9 +12,12 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.view.*;
-import com.greatbee.core.manager.DSManager;
+import com.greatbee.core.bean.view.Condition;
+import com.greatbee.core.bean.view.ConnectorTree;
+import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.db.RelationalDataManager;
+import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.BuildUtils;
 import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
@@ -1128,8 +1131,14 @@ public class MysqlDataManager implements RelationalDataManager, ExceptionCode {
             logger.info("查询对象SQL：" + sql.toString());
             ps = conn.prepareStatement(sql.toString());//返回主键
             int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
-            rs = ps.executeQuery();
 
+//            String tomcatJdbcPsSql = ps.toString().split(";")[2];
+//            String realSql = tomcatJdbcPsSql.substring(tomcatJdbcPsSql.indexOf(":")+1,tomcatJdbcPsSql.length()-1);
+//            JdbcTemplate jdbcTemplate = new JdbcTemplate();
+//            jdbcTemplate.setDataSource(_ds);
+//            List<Map<String, Object>> list = jdbcTemplate.queryForList(realSql);
+
+            rs = ps.executeQuery();
             List<Data> list = new ArrayList<Data>();
             Map<String, Field> map = new HashMap<String, Field>();
             BuildUtils.buildAllFields(connectorTree, map);
