@@ -6,7 +6,7 @@
 
     <groupId>greatbee</groupId>
     <artifactId>ty-server-db</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <name>ty-server-db</name>
     <packaging>jar</packaging>
@@ -70,7 +70,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>6.0.6</version>
+            <version>5.1.26</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/log4j/log4j -->
         <dependency>

@@ -137,7 +137,7 @@ public class DataSourceUtils {
             //只会发现当前连接失效，再创建一个连接供当前查询使用
             _ds.setTestOnBorrow(true);
             //removeAbandonedTimeout  ：超过时间限制，回收没有用(废弃)的连接（默认为 300秒，调整为180）
-//            _ds.setRemoveAbandonedTimeout(300);
+            _ds.setRemoveAbandonedTimeout(300);
             //removeAbandoned  ：超过removeAbandonedTimeout时间后，是否进 行没用连接（废弃）的回收（默认为false，调整为true)
             //DATA_SOURCE.setRemoveAbandonedOnMaintenance(removeAbandonedOnMaintenance);
 //            _ds.setRemoveAbandonedOnBorrow(true);
