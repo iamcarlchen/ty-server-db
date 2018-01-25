@@ -116,6 +116,141 @@ public class MysqlSchemaUtil implements ExceptionCode {
 
 
     /**
+     * 删除表
+     *
+     * @param ds        ds
+     * @param tableName tableName
+     * @throws DBException DBException
+     */
+    public static void dropTable(DS ds, String tableName) throws DBException {
+        Connection conn = null;
+        Statement ps = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            ps = conn.createStatement();
+            if (isTableExits(ds, tableName)) {
+                StringBuilder dropSQL = new StringBuilder();
+                dropSQL.append("DROP TABLE ");
+                dropSQL.append(tableName);
+                ps.addBatch(dropSQL.toString());
+            } else {
+                throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
+            }
+            ps.executeBatch();//批量执行
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } catch (DBException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), e.getCode());
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
+    }
+
+    /**
+     * 删除表字段
+     *
+     * @param ds        ds
+     * @param tableName tableName
+     * @param fieldName fieldName
+     * @throws DBException DBException
+     */
+    public static void dropTableField(DS ds, String tableName, String fieldName) throws DBException {
+        Connection conn = null;
+        Statement ps = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            ps = conn.createStatement();
+            StringBuilder dropSQL = new StringBuilder();
+            dropSQL.append("alter table ").append(tableName).append(" drop column ").append(fieldName).append(";");
+            ps.addBatch(dropSQL.toString());
+            ps.executeBatch();//批量执行
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
+    }
+
+    /**
+     * 校验表是否已经存在
+     *
+     * @param ds
+     * @param tableName
+     * @return
+     * @throws DBException
+     */
+    public static boolean isTableExits(DS ds, String tableName) throws DBException {
+        boolean isExist = false;
+        Connection conn = null;
+        ResultSet rs = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            rs = conn.createStatement().executeQuery("show TABLES");
+            while (rs.next()) {
+                if (tableName.equalsIgnoreCase(rs.getString(1))) {
+                    //找到存在的表
+                    isExist = true;
+                }
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException("show tables 异常:" + e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
+        return isExist;
+    }
+
+    /**
      * java.sql.Types类型转换成DT类型
      *
      * @param type

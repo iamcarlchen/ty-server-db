@@ -40,6 +40,7 @@ public interface ExceptionCode {
     public static final long ERROR_DB_OIView_INVAlID = 200013;//OIView为空
     public static final long ERROR_DB_FIELD_NOT_EXIST = 200014;//字段不存在为空
     public static final long ERROR_DB_FIELD_EXIST = 200015;//字段已存在
+    public static final long ERROR_DB_TABLE_NOT_EXIST = 200016;//表不存在
 
     //Lego的相关异常Code以3开头
     public static final long ERROR_LEGO_ADD = 300001;

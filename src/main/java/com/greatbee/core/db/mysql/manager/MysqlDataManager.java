@@ -863,7 +863,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                 ps = conn.createStatement();
                 for (OIView oiView : dsView.getOiViews()) {
                     String tableName = oiView.getOi().getResource();
-                    if (_isTableExits(ds, tableName)) {
+                    if (MysqlSchemaUtil.isTableExits(ds, tableName)) {
                         StringBuilder dropSQL = new StringBuilder();
                         dropSQL.append("DROP TABLE ");
                         dropSQL.append(tableName);
@@ -1166,51 +1166,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         }
     }
 
-    /**
-     * 校验表是否已经存在
-     *
-     * @param ds
-     * @param tableName
-     * @return
-     * @throws DBException
-     */
-    public boolean _isTableExits(DS ds, String tableName) throws DBException {
-        boolean isExist = false;
-        Connection conn = null;
-        ResultSet rs = null;
-        try {
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            rs = conn.createStatement().executeQuery("show TABLES");
-            while (rs.next()) {
-                if (tableName.equalsIgnoreCase(rs.getString(1))) {
-                    //找到存在的表
-                    isExist = true;
-                }
-            }
-            rs.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException("show tables 异常:" + e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
-        }
-        return isExist;
-    }
+
 
     /**
      * 组建建表sql
@@ -1221,7 +1177,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
      */
     private String _buildCreateTableSql(DS ds, String tableName, List<Field> dbFields) throws DBException {
         if (tableName != null) {
-            if (!this._isTableExits(ds, tableName)) {
+            if (!MysqlSchemaUtil.isTableExits(ds, tableName)) {
                 //只有表不存在时，才创建
                 Field pkField = null;//标记主键Field
                 StringBuilder sql = new StringBuilder();
@@ -1307,43 +1263,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
     public void dropTable(OI oi) throws DBException {
         OIUtils.isValid(oi);
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        Connection conn = null;
-        Statement ps = null;
-        try {
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            ps = conn.createStatement();
-            String tableName = oi.getResource();
-            if (_isTableExits(ds, tableName)) {
-                StringBuilder dropSQL = new StringBuilder();
-                dropSQL.append("DROP TABLE ");
-                dropSQL.append(tableName);
-                ps.addBatch(dropSQL.toString());
-            }
-            ps.executeBatch();//批量执行
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } catch (DBException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), e.getCode());
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
-        }
+        MysqlSchemaUtil.dropTable(ds,oi.getResource());
     }
 
     @Override
@@ -1373,15 +1293,16 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //删除字段
-        
+        MysqlSchemaUtil.dropTableField(ds,oi.getAlias(), field.getFieldName());
     }
+
 
     @Override
     public void updateField(OI oi, Field field) throws DBException {
         OIUtils.isValid(oi);
         //读取之前schema
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getResource());
         OIUtils.isViewValid(oiView);
         //判断字段名称是否存在
         if (!OIUtils.hasViewField(oiView, field.getFieldName())) {
