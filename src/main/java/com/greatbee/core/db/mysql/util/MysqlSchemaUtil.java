@@ -1,23 +1,32 @@
 package com.greatbee.core.db.mysql.util;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.greatbee.base.bean.DBException;
+import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.util.DataSourceUtils;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by usagizhang on 18/1/22.
  */
 public class MysqlSchemaUtil implements ExceptionCode {
+    //默认字符串长度
+    private static final int DEFULT_STRING_LENGTH = 64;
+    private static final String DB_ENGINE = "InnoDB";
+    private static final String DB_ENCODING = "utf8";
 
     public static void dumpTable() {
 
@@ -114,6 +123,49 @@ public class MysqlSchemaUtil implements ExceptionCode {
         return oiView;
     }
 
+    /**
+     * 创建表
+     */
+    public static void createTable(DS ds, String tableName,List<Field> fieldList) throws DBException {
+        Connection conn = null;
+        Statement ps = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            ps = conn.createStatement();
+            if (isTableExits(ds, tableName)) {
+                StringBuilder createSQL = new StringBuilder();
+                //TODO:创建表语句构建
+
+                ps.addBatch(createSQL.toString());
+            } else {
+                throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
+            }
+            ps.executeBatch();//批量执行
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } catch (DBException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), e.getCode());
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
+    }
 
     /**
      * 删除表
@@ -277,5 +329,79 @@ public class MysqlSchemaUtil implements ExceptionCode {
         } else {
             return "";
         }
+    }
+
+    /**
+     * 组建建表sql
+     *
+     * @param tableName
+     * @param dbFields
+     * @throws DBException
+     */
+    public static String _buildCreateTableSql(DS ds, String tableName, List<Field> dbFields) throws DBException {
+        if (tableName != null) {
+            if (!MysqlSchemaUtil.isTableExits(ds, tableName)) {
+                //只有表不存在时，才创建
+                Field pkField = null;//标记主键Field
+                StringBuilder sql = new StringBuilder();
+                sql.append("CREATE TABLE `").append(tableName).append("`").append(" ( ");
+
+                if (CollectionUtil.isValid(dbFields)) {
+                    for (Field field : dbFields) {
+                        String fieldName = field.getFieldName();
+                        String dt = field.getDt();
+                        if (field.isPk()) {
+                            pkField = field;
+                        }
+                        if (field.isPk() && DT.INT.getType().equals(field.getDt())) {
+                            //主键 如果是整形的话 需要自增长
+                            sql.append("`").append(fieldName).append("`").append(" INT(11) NOT NULL AUTO_INCREMENT ")
+                                    .append(",");
+                        } else {
+                            sql.append("`").append(fieldName).append("`")
+                                    .append(_getFieldSQLType(dt, field.getFieldLength())).append(",");
+                        }
+                    }
+                }
+                sql.append("PRIMARY KEY (`").append(pkField.getFieldName()).append("`) ,").append("");
+                sql.append("UNIQUE INDEX `").append(pkField.getFieldName()).append("_UNIQUE` (`")
+                        .append(pkField.getFieldName()).append("` ASC) ").append("");
+                sql.append(" ) ").append(" ENGINE=" + DB_ENGINE + " DEFAULT CHARSET=" + DB_ENCODING + ";");
+                return sql.toString();
+            }
+            //如果存在表就直接跳过
+        } else {
+            throw new DBException("OI表名必须有效", ExceptionCode.ERROR_DB_OI_TABLE_NAME_INVAlID);
+        }
+        return null;
+    }
+
+    public static final String _getFieldSQLType(String dt, int length) {
+        StringBuilder sql = new StringBuilder();
+        if (DT.String.getType().equals(dt)) {
+            if (length > 500) {
+                sql.append(" TEXT DEFAULT NULL ");
+            } else {
+                sql.append(" VARCHAR(");
+                if (length > 0) {
+                    sql.append(length);
+                } else {
+                    sql.append(DEFULT_STRING_LENGTH);
+                }
+                sql.append(") DEFAULT NULL ");
+            }
+        } else if (DT.Boolean.getType().equals(dt)) {
+            sql.append(" TINYINT(4) DEFAULT 0 ");
+        } else if (DT.Date.getType().equals(dt)) {
+            sql.append(" DATETIME DEFAULT NULL ");
+
+        } else if (DT.Time.getType().equals(dt)) {
+            sql.append(" DATETIME DEFAULT NULL ");
+        } else if (DT.Double.getType().equals(dt)) {
+            sql.append(" DECIMAL(10,2) DEFAULT 0 ");
+        } else if (DT.INT.getType().equals(dt)) {
+            sql.append(" INT(11) DEFAULT 0 ");
+        }
+        return sql.toString();
     }
 }

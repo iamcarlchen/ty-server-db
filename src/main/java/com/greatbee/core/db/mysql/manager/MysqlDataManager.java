@@ -221,7 +221,6 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             int count = _pageTotalCount(oi, condition);
             System.out.println("总记录数：" + count);
 
-
             List<Data> list = new ArrayList<Data>();
             while (rs.next()) {
                 Data map = new Data();
@@ -661,11 +660,14 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
      * @throws DBException
      */
     private static void _checkFieldLengthOverLimit(Field field) throws DBException {
-        if ((DT.INT.getType().equals(field.getDt()) || (DT.Boolean.getType().equals(field.getDt())) && (field.getFieldValue() == null || field.getFieldValue().equals("false") || field.getFieldValue().equals("true")))) {
+        if ((DT.INT.getType().equals(field.getDt())
+                || (DT.Boolean.getType().equals(field.getDt())) && (field.getFieldValue() == null
+                        || field.getFieldValue().equals("false") || field.getFieldValue().equals("true")))) {
             //boolean类型直接过滤掉
             return;
         }
-        if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength() > 0 && (field.getFieldValue().length() > field.getFieldLength())) {
+        if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength() > 0
+                && (field.getFieldValue().length() > field.getFieldLength())) {
             throw new DBException("字段值长度超过字段限制长度", ExceptionCode.ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
         }
     }
@@ -718,7 +720,6 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         _setPsParam(index, ps, fields);
     }
 
-
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
         Connection conn = null;
@@ -727,7 +728,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             conn = DataSourceUtils.getDatasource(ds).getConnection();
             DatabaseMetaData metaData = conn.getMetaData();
 
-            ResultSet rs = metaData.getTables(null, null, "", new String[]{"TABLE"});
+            ResultSet rs = metaData.getTables(null, null, "", new String[] { "TABLE" });
             dsView.setDs(ds);
             List<OIView> oiViews = new ArrayList<OIView>();
             while (rs.next()) {
@@ -814,7 +815,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                 for (OIView oiView : dsView.getOiViews()) {
                     List<Field> fields = oiView.getFields();
                     String tableName = oiView.getOi().getResource();
-                    String sql = _buildCreateTableSql(ds, tableName, fields);
+                    String sql = MysqlSchemaUtil._buildCreateTableSql(ds, tableName, fields);
                     System.out.println("create table sql=" + sql);
                     ps.addBatch(sql);
                 }
@@ -897,7 +898,6 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             }
         }
     }
-
 
     @Override
     public Data read(ConnectorTree connectorTree) throws DBException {
@@ -1166,106 +1166,45 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         }
     }
 
-
+    
 
     /**
-     * 组建建表sql
-     *
-     * @param tableName
-     * @param dbFields
-     * @throws DBException
+     * 差异化比较
      */
-    private String _buildCreateTableSql(DS ds, String tableName, List<Field> dbFields) throws DBException {
-        if (tableName != null) {
-            if (!MysqlSchemaUtil.isTableExits(ds, tableName)) {
-                //只有表不存在时，才创建
-                Field pkField = null;//标记主键Field
-                StringBuilder sql = new StringBuilder();
-                sql.append("CREATE TABLE `").append(tableName).append("`").append(" ( ");
-
-                if (CollectionUtil.isValid(dbFields)) {
-                    for (Field field : dbFields) {
-                        String fieldName = field.getFieldName();
-                        String dt = field.getDt();
-                        if (field.isPk()) {
-                            pkField = field;
-                        }
-                        if (field.isPk() && DT.INT.getType().equals(field.getDt())) {
-                            //主键 如果是整形的话 需要自增长
-                            sql.append("`").append(fieldName).append("`")
-                                    .append(" INT(11) NOT NULL AUTO_INCREMENT ")
-                                    .append(",");
-                        } else {
-                            sql.append("`").append(fieldName).append("`")
-                                    .append(_getFieldSQLType(dt, field.getFieldLength()))
-                                    .append(",");
-                        }
-                    }
-                }
-                sql.append("PRIMARY KEY (`").append(pkField.getFieldName()).append("`) ,").append("");
-                sql.append("UNIQUE INDEX `").append(pkField.getFieldName()).append("_UNIQUE` (`").append(pkField.getFieldName()).append("` ASC) ").append("");
-                sql.append(" ) ").append(" ENGINE=" + DB_ENGINE + " DEFAULT CHARSET=" + DB_ENCODING + ";");
-                return sql.toString();
-            }
-            //如果存在表就直接跳过
-        } else {
-            throw new DBException("OI表名必须有效", ExceptionCode.ERROR_DB_OI_TABLE_NAME_INVAlID);
-        }
-        return null;
-    }
-
-    //默认字符串长度
-    private static final int DEFULT_STRING_LENGTH = 64;
-    private static final String DB_ENGINE = "InnoDB";
-    private static final String DB_ENCODING = "utf8";
-
-    public static final String _getFieldSQLType(String dt, int length) {
-        StringBuilder sql = new StringBuilder();
-        if (DT.String.getType().equals(dt)) {
-            if (length > 500) {
-                sql.append(" TEXT DEFAULT NULL ");
-            } else {
-                sql.append(" VARCHAR(");
-                if (length > 0) {
-                    sql.append(length);
-                } else {
-                    sql.append(DEFULT_STRING_LENGTH);
-                }
-                sql.append(") DEFAULT NULL ");
-            }
-        } else if (DT.Boolean.getType().equals(dt)) {
-            sql.append(" TINYINT(4) DEFAULT 0 ");
-        } else if (DT.Date.getType().equals(dt)) {
-            sql.append(" DATETIME DEFAULT NULL ");
-
-        } else if (DT.Time.getType().equals(dt)) {
-            sql.append(" DATETIME DEFAULT NULL ");
-        } else if (DT.Double.getType().equals(dt)) {
-            sql.append(" DECIMAL(10,2) DEFAULT 0 ");
-        } else if (DT.INT.getType().equals(dt)) {
-            sql.append(" INT(11) DEFAULT 0 ");
-        }
-        return sql.toString();
-    }
-
     @Override
     public List<DiffItem> diff(DS ds) throws DBException {
         return null;
     }
 
+    /**
+     * 创建表
+     */
     @Override
     public void createTable(OI oi) throws DBException {
         OIUtils.isValid(oi);
-
+        //获取ds
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        //获取OI对应的字段
+        List<Field> fieldList=new ArrayList<Field>();
+        
+        //执行创建表
+        MysqlSchemaUtil.createTable(ds, oi.getResource(), fieldList);
     }
 
+    /**
+     * 删除表
+     * done！
+     */
     @Override
     public void dropTable(OI oi) throws DBException {
         OIUtils.isValid(oi);
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        MysqlSchemaUtil.dropTable(ds,oi.getResource());
+        MysqlSchemaUtil.dropTable(ds, oi.getResource());
     }
 
+    /**
+     * 添加字段
+     */
     @Override
     public void addField(OI oi, Field field) throws DBException {
         OIUtils.isValid(oi);
@@ -1281,6 +1220,10 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
 
     }
 
+    /**
+     *  删除字段
+     *  done!
+     */
     @Override
     public void dropField(OI oi, Field field) throws DBException {
         OIUtils.isValid(oi);
@@ -1293,10 +1236,13 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //删除字段
-        MysqlSchemaUtil.dropTableField(ds,oi.getAlias(), field.getFieldName());
+        MysqlSchemaUtil.dropTableField(ds, oi.getAlias(), field.getFieldName());
     }
 
-
+    /**
+     * 更新字段
+     * 
+     */
     @Override
     public void updateField(OI oi, Field field) throws DBException {
         OIUtils.isValid(oi);
@@ -1309,6 +1255,6 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //更新字段
-
+        
     }
 }
