@@ -1186,7 +1186,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
         //获取OI对应的字段
         List<Field> fieldList=new ArrayList<Field>();
-        
+         
         //执行创建表
         MysqlSchemaUtil.createTable(ds, oi.getResource(), fieldList);
     }

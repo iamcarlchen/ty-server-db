@@ -126,7 +126,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
     /**
      * 创建表
      */
-    public static void createTable(DS ds, String tableName,List<Field> fieldList) throws DBException {
+    public static void createTable(DS ds, String tableName,List<Field>  dbFields) throws DBException {
         Connection conn = null;
         Statement ps = null;
         try {
@@ -134,8 +134,8 @@ public class MysqlSchemaUtil implements ExceptionCode {
             ps = conn.createStatement();
             if (isTableExits(ds, tableName)) {
                 StringBuilder createSQL = new StringBuilder();
-                //TODO:创建表语句构建
-
+                //创建表语句构建
+                createSQL.append(_buildCreateTableSql(ds, tableName, dbFields));
                 ps.addBatch(createSQL.toString());
             } else {
                 throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
