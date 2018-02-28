@@ -61,9 +61,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
             }
         }
 
-
     }
-
 
     /**
      * dump 表
@@ -75,7 +73,8 @@ public class MysqlSchemaUtil implements ExceptionCode {
      * @throws DBException  DBException
      * @throws SQLException SQLException
      */
-    public static OIView dumpTable(DS ds, DatabaseMetaData metaData, String tableName) throws DBException, SQLException {
+    public static OIView dumpTable(DS ds, DatabaseMetaData metaData, String tableName)
+            throws DBException, SQLException {
         OI oi = new OI();
         oi.setName(tableName);
         oi.setAlias(tableName);
@@ -126,44 +125,14 @@ public class MysqlSchemaUtil implements ExceptionCode {
     /**
      * 创建表
      */
-    public static void createTable(DS ds, String tableName,List<Field>  dbFields) throws DBException {
-        Connection conn = null;
-        Statement ps = null;
-        try {
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            ps = conn.createStatement();
-            if (isTableExits(ds, tableName)) {
-                StringBuilder createSQL = new StringBuilder();
-                //创建表语句构建
-                createSQL.append(_buildCreateTableSql(ds, tableName, dbFields));
-                ps.addBatch(createSQL.toString());
-            } else {
-                throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
-            }
-            ps.executeBatch();//批量执行
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-        } catch (DBException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), e.getCode());
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+    public static void createTable(DS ds, String tableName, List<Field> dbFields) throws DBException {
+        if (isTableExits(ds, tableName)) {
+            StringBuilder createSQL = new StringBuilder();
+            //创建表语句构建
+            createSQL.append(_buildCreateTableSql(ds, tableName, dbFields));
+            _executeQuery(ds, createSQL.toString());
+        } else {
+            throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
         }
     }
 
@@ -175,44 +144,71 @@ public class MysqlSchemaUtil implements ExceptionCode {
      * @throws DBException DBException
      */
     public static void dropTable(DS ds, String tableName) throws DBException {
-        Connection conn = null;
-        Statement ps = null;
-        try {
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            ps = conn.createStatement();
-            if (isTableExits(ds, tableName)) {
-                StringBuilder dropSQL = new StringBuilder();
-                dropSQL.append("DROP TABLE ");
-                dropSQL.append(tableName);
-                ps.addBatch(dropSQL.toString());
-            } else {
-                throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
-            }
-            ps.executeBatch();//批量执行
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-        } catch (DBException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), e.getCode());
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+        if (isTableExits(ds, tableName)) {
+            StringBuilder dropSQL = new StringBuilder();
+            dropSQL.append("DROP TABLE ");
+            dropSQL.append(tableName);
+            _executeQuery(ds, dropSQL.toString());
+        } else {
+            throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
         }
+    }
+
+    /**
+     * 添加字段
+     */
+    public static void addField(DS ds, String tableName, Field field) throws DBException {
+        if (!isTableExits(ds, tableName)) {
+            //表不存在
+        }
+        StringBuilder queryBuilder = new StringBuilder();
+        //TODO:构建sql
+        // alter table table1 add transactor varchar(10) not Null;
+        // alter table   table1 add id int unsigned not Null auto_increment primary key
+        queryBuilder.append("alter table ").append(tableName).append(" add `").append(field.getFieldName()).append("` ")
+                .append(_getFieldSQLType(field.getDt(), field.getFieldLength()));
+        if (field.isPk()) {
+            //主键的情况
+            queryBuilder.append(" primary key ;");
+        } else {
+            queryBuilder.append(" ; ");
+        }
+
+        _executeQuery(ds, queryBuilder.toString());
+
+    }
+
+    /**
+     * 更新字段
+     */
+    public static void updateField(DS ds, String tableName, Field oldField, Field newField) throws DBException {
+        if (!isTableExits(ds, tableName)) {
+            //表不存在
+        }
+        StringBuilder queryBuilder = new StringBuilder();
+        //TODO:构建sql
+        // alter table 表名称 change 字段名称 字段名称 字段类型 [是否允许非空];
+        if (oldField.getFieldName().equalsIgnoreCase(newField.getFieldName())) {
+            //字段名称不修改的情况
+            queryBuilder.append("alter table `").append(tableName).append("` change `").append(newField.getFieldName())
+                    .append("` ").append(_getFieldSQLType(newField.getDt(), newField.getFieldLength()));
+        } else {
+            //字段名称修改的情况
+            queryBuilder.append("alter table `").append(tableName).append("` change `").append(oldField.getFieldName())
+                    .append("` `").append(newField.getFieldName()).append("` ")
+                    .append(_getFieldSQLType(newField.getDt(), newField.getFieldLength()));
+        }
+
+        // if (field.isPk()) {
+        //     //主键的情况
+        //     queryBuilder.append(" primary key ;");
+        // } else {
+        //     queryBuilder.append(" ; ");
+        // }
+        queryBuilder.append(" ; ");
+
+        _executeQuery(ds, queryBuilder.toString());
+
     }
 
     /**
@@ -224,36 +220,9 @@ public class MysqlSchemaUtil implements ExceptionCode {
      * @throws DBException DBException
      */
     public static void dropTableField(DS ds, String tableName, String fieldName) throws DBException {
-        Connection conn = null;
-        Statement ps = null;
-        try {
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            ps = conn.createStatement();
-            StringBuilder dropSQL = new StringBuilder();
-            dropSQL.append("alter table ").append(tableName).append(" drop column ").append(fieldName).append(";");
-            ps.addBatch(dropSQL.toString());
-            ps.executeBatch();//批量执行
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
-        }
+        StringBuilder dropSQL = new StringBuilder();
+        dropSQL.append("alter table ").append(tableName).append(" drop column ").append(fieldName).append(";");
+        _executeQuery(ds, dropSQL.toString());
     }
 
     /**
@@ -310,13 +279,15 @@ public class MysqlSchemaUtil implements ExceptionCode {
      * @throws Exception
      */
     public static String transferMysqlTypeToTySqlType(int type, int colSize) {
-        if (type == Types.INTEGER || (type == Types.TINYINT && colSize > 4) || type == Types.BIT || type == Types.BIGINT) {
+        if (type == Types.INTEGER || (type == Types.TINYINT && colSize > 4) || type == Types.BIT
+                || type == Types.BIGINT) {
             return DT.INT.getType();
         } else if (type == Types.DOUBLE || type == Types.DECIMAL) {
             return DT.Double.getType();
         } else if (type == Types.BOOLEAN || (type == Types.TINYINT && colSize <= 4)) {
             return DT.Boolean.getType();
-        } else if (type == Types.VARCHAR || type == Types.LONGVARCHAR || type == Types.NVARCHAR || type == Types.LONGNVARCHAR || type == Types.CLOB || type == Types.CHAR) {
+        } else if (type == Types.VARCHAR || type == Types.LONGVARCHAR || type == Types.NVARCHAR
+                || type == Types.LONGNVARCHAR || type == Types.CLOB || type == Types.CHAR) {
             return DT.String.getType();
         } else if (type == Types.DATE) {
             return DT.Date.getType();
@@ -403,5 +374,39 @@ public class MysqlSchemaUtil implements ExceptionCode {
             sql.append(" INT(11) DEFAULT 0 ");
         }
         return sql.toString();
+    }
+
+    /**
+     * 执行sql
+     */
+    private static void _executeQuery(DS ds, String sql) throws DBException {
+        Connection conn = null;
+        Statement ps = null;
+        try {
+            conn = DataSourceUtils.getDatasource(ds).getConnection();
+            ps = conn.createStatement();
+            ps.addBatch(sql);
+            ps.executeBatch();//批量执行
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
+                }
+            }
+        }
     }
 }

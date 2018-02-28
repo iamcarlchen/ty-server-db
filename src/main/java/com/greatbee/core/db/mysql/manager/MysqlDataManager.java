@@ -1166,29 +1166,27 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         }
     }
 
-    
-
     /**
      * 差异化比较
      */
     @Override
-    public List<DiffItem> diff(DS ds) throws DBException {
+    public List<DiffItem> diff(DSView dsView) throws DBException {
+        DS ds = dsView.getDs();
+
         return null;
     }
 
     /**
      * 创建表
+     * done!
      */
     @Override
-    public void createTable(OI oi) throws DBException {
+    public void createTable(OI oi, List<Field> dFields) throws DBException {
         OIUtils.isValid(oi);
         //获取ds
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        //获取OI对应的字段
-        List<Field> fieldList=new ArrayList<Field>();
-         
         //执行创建表
-        MysqlSchemaUtil.createTable(ds, oi.getResource(), fieldList);
+        MysqlSchemaUtil.createTable(ds, oi.getResource(), dFields);
     }
 
     /**
@@ -1204,6 +1202,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
 
     /**
      * 添加字段
+     * done!
      */
     @Override
     public void addField(OI oi, Field field) throws DBException {
@@ -1217,7 +1216,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("字段已存在", ExceptionCode.ERROR_DB_FIELD_EXIST);
         }
         //添加字段
-
+        MysqlSchemaUtil.addField(ds, oi.getResource(), field);
     }
 
     /**
@@ -1241,20 +1240,20 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
 
     /**
      * 更新字段
-     * 
+     * done!
      */
     @Override
-    public void updateField(OI oi, Field field) throws DBException {
+    public void updateField(OI oi, Field oldField, Field newField) throws DBException {
         OIUtils.isValid(oi);
         //读取之前schema
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
         OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getResource());
         OIUtils.isViewValid(oiView);
         //判断字段名称是否存在
-        if (!OIUtils.hasViewField(oiView, field.getFieldName())) {
+        if (!OIUtils.hasViewField(oiView, oldField.getFieldName())) {
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //更新字段
-        
+        MysqlSchemaUtil.updateField(ds,oi.getResource(),oldField,newField);
     }
 }

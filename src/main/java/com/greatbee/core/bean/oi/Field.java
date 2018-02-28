@@ -11,7 +11,7 @@ import java.util.List;
  * Created by CarlChen on 16/10/11.
  */
 public class Field extends SimpleIND implements IND {
-    //字段名称
+    //字段名称(数据库中的字段名称)
     private String fieldName;
     //所属OI的别名
     private String oiAlias;
