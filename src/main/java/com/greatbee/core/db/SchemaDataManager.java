@@ -67,4 +67,13 @@ public interface SchemaDataManager {
      * @throws DBException
      */
     public void updateField(OI oi, Field oldField, Field newField) throws DBException;
+
+    /**
+     * 更新字段
+     *
+     * @param oi
+     * @param field
+     * @throws DBException
+     */
+    public void updateField(OI oi, Field updateField) throws DBException;
 }

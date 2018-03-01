@@ -1,5 +1,21 @@
 package com.greatbee.core.db.mysql.manager;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
@@ -12,24 +28,21 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.view.*;
+import com.greatbee.core.bean.view.Condition;
+import com.greatbee.core.bean.view.ConnectorTree;
+import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.view.DiffItem;
+import com.greatbee.core.bean.view.OIView;
+import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
 import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.util.BuildUtils;
 import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.util.OIUtils;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.sql.DataSource;
-import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Mysql Data Manager
@@ -1255,5 +1268,14 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         }
         //更新字段
         MysqlSchemaUtil.updateField(ds,oi.getResource(),oldField,newField);
+    }
+
+    /**
+     * 更新字段
+     * done!
+     */
+    @Override
+    public void updateField(OI oi, Field updatField) throws DBException {
+        this.updateField(oi, updatField, updatField);
     }
 }
