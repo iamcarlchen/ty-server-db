@@ -28,6 +28,18 @@ public class DiffItem {
 
     private Field oiField;
 
+    public DiffItem() {
+
+    }
+
+    public DiffItem(String type, String resource, String fieldName, Field dbField, Field oiField) {
+        this.type = type;
+        this.resource = resource;
+        this.fieldName = fieldName;
+        this.dbField = dbField;
+        this.oiField = oiField;
+    }
+
     public String getType() {
         return type;
     }

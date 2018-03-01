@@ -1240,12 +1240,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                             //表结构不存在
                             for (Field field : oiFields) {
                                 //生成diff元件
-                                DiffItem diffItem = new DiffItem();
-                                diffItem.setResource(oiView.getOi().getResource());
-                                diffItem.setFieldName(field.getFieldName());
-                                diffItem.setType("2");//type=2: TY配置表存在，物理表没有
-                                diffItem.setOiField(field);
-                                diffItemList.add(diffItem);
+                                diffItemList.add(new DiffItem("2", oiView.getOi().getResource(), field.getFieldName(),
+                                        null, field));
                             }
                         }
 
@@ -1260,12 +1256,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                             }
                             if (existDBField == null) {
                                 //字段不存在
-                                DiffItem diffItem = new DiffItem();
-                                diffItem.setResource(oiView.getOi().getResource());
-                                diffItem.setFieldName(oiField.getFieldName());
-                                diffItem.setType("4");//type=4: TY表配置了字段X，物理表没有
-                                diffItem.setOiField(oiField);
-                                diffItemList.add(diffItem);
+                                diffItemList.add(new DiffItem("4", oiView.getOi().getResource(), oiField.getFieldName(),
+                                        null, oiField));
                             } else {
                                 //表和字段都存在，比对属性
                                 // oiField
