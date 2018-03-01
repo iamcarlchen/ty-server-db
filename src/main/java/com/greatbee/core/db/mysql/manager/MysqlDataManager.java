@@ -1119,11 +1119,11 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             ps = conn.prepareStatement(sql.toString());//返回主键
             int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
 
-//            String tomcatJdbcPsSql = ps.toString().split(";")[2];
-//            String realSql = tomcatJdbcPsSql.substring(tomcatJdbcPsSql.indexOf(":")+1,tomcatJdbcPsSql.length()-1);
-//            JdbcTemplate jdbcTemplate = new JdbcTemplate();
-//            jdbcTemplate.setDataSource(_ds);
-//            List<Map<String, Object>> list = jdbcTemplate.queryForList(realSql);
+            //            String tomcatJdbcPsSql = ps.toString().split(";")[2];
+            //            String realSql = tomcatJdbcPsSql.substring(tomcatJdbcPsSql.indexOf(":")+1,tomcatJdbcPsSql.length()-1);
+            //            JdbcTemplate jdbcTemplate = new JdbcTemplate();
+            //            jdbcTemplate.setDataSource(_ds);
+            //            List<Map<String, Object>> list = jdbcTemplate.queryForList(realSql);
 
             rs = ps.executeQuery();
             List<Data> list = new ArrayList<Data>();
@@ -1191,10 +1191,173 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
      * 差异化比较
      */
     @Override
-    public List<DiffItem> diff(DSView dsView) throws DBException {
-        DS ds = dsView.getDs();
+    public List<DiffItem> diff(DSView configDSView) throws DBException {
+        DS ds = configDSView.getDs();
+        List<OIView> configOIViews = configDSView.getOiViews();
+        DSView dbDSView = this.exportFromPhysicsDS(ds);
+        List<OIView> dbOIViews = dbDSView.getOiViews();
 
-        return null;
+        boolean dbHaveSchema = CollectionUtil.isValid(dbOIViews);
+
+        List<DiffItem> diffItemList = new ArrayList<DiffItem>();
+
+        if (CollectionUtil.isValid(configOIViews)) {
+            //配置表里有OI
+            if (!dbHaveSchema) {
+                //数据库中没有表结构，直接创建
+                for (OIView oiView : configOIViews) {
+                    //拉出oiView下面所有的字段
+                    List<Field> oiFields = oiView.getFields();
+                    if (CollectionUtil.isValid(oiFields)) {
+                        for (Field field : oiFields) {
+                            //生成diff元件
+                            DiffItem diffItem = new DiffItem();
+                            diffItem.setResource(oiView.getOi().getResource());
+                            diffItem.setFieldName(field.getFieldName());
+                            diffItem.setType("2");
+                            diffItem.setOiField(field);
+                            diffItemList.add(diffItem);
+                        }
+                    }
+                    //没有字段就跳过
+                }
+            } else {
+                //数据库中有表结构，需要比对
+
+                //填装oi Map的数据
+                for (OIView oiView : configOIViews) {
+                    if (CollectionUtil.isValid(oiView.getFields())) {
+                        //遍历db表结构
+                        OIView existDBView = null;
+                        for (OIView dbView : dbOIViews) {
+                            if (dbView.getOi().getResource().equalsIgnoreCase(oiView.getOi().getResource())) {
+                                //表结构存在
+                                existDBView = dbView;
+                            }
+                        }
+                        List<Field> oiFields = oiView.getFields();
+                        if (existDBView == null) {
+                            //表结构不存在
+                            for (Field field : oiFields) {
+                                //生成diff元件
+                                DiffItem diffItem = new DiffItem();
+                                diffItem.setResource(oiView.getOi().getResource());
+                                diffItem.setFieldName(field.getFieldName());
+                                diffItem.setType("2");//type=2: TY配置表存在，物理表没有
+                                diffItem.setOiField(field);
+                                diffItemList.add(diffItem);
+                            }
+                        }
+
+                        for (Field oiField : oiFields) {
+                            Field existDBField = null;
+                            if (CollectionUtil.isValid(existDBView.getFields())) {
+                                for (Field dbField : existDBView.getFields()) {
+                                    if (dbField.getFieldName().equalsIgnoreCase(oiField.getFieldName())) {
+                                        existDBField = dbField;
+                                    }
+                                }
+                            }
+                            if (existDBField == null) {
+                                //字段不存在
+                                DiffItem diffItem = new DiffItem();
+                                diffItem.setResource(oiView.getOi().getResource());
+                                diffItem.setFieldName(oiField.getFieldName());
+                                diffItem.setType("4");//type=4: TY表配置了字段X，物理表没有
+                                diffItem.setOiField(oiField);
+                                diffItemList.add(diffItem);
+                            } else {
+                                //表和字段都存在，比对属性
+                                // oiField
+                                // existDBField
+                                if (oiField.getFieldLength() != existDBField.getFieldLength()
+                                        || !oiField.getDt().equalsIgnoreCase(existDBField.getDt())) {
+                                    //字段长度或类型不一样的时候
+                                    //生成diff元件
+                                    DiffItem diffItem = new DiffItem();
+                                    diffItem.setResource(oiView.getOi().getResource());
+                                    diffItem.setFieldName(oiField.getFieldName());
+                                    diffItem.setType("5");//type=5: TY表配置的字段和物理表配置的字段类型等参数不一致
+                                    diffItem.setOiField(oiField);
+                                    diffItem.setDbField(existDBField);
+                                    diffItemList.add(diffItem);
+                                }
+                            }
+                        }
+                    } else {
+                        //这个oi没有配置字段
+                    }
+                }
+                //填装db Map的数据
+                for (OIView dbView : dbOIViews) {
+                    if (CollectionUtil.isValid(dbView.getFields())) {
+                        OIView existOiView = null;
+                        for (OIView oiView : configOIViews) {
+                            if (oiView.getOi().getResource().equalsIgnoreCase(dbView.getOi().getResource())) {
+                                existOiView = oiView;
+                            }
+                        }
+                        List<Field> dbFields = dbView.getFields();
+                        if (existOiView == null) {
+                            //oi中缺少物理库中存在的表
+                            for (Field dbField : dbFields) {
+                                DiffItem diffItem = new DiffItem();
+                                diffItem.setResource(dbView.getOi().getResource());
+                                diffItem.setFieldName(dbField.getFieldName());
+                                diffItem.setType("1");//type=1: 物理表存在，TY没有配置
+                                diffItem.setDbField(dbField);
+                                diffItemList.add(diffItem);
+                            }
+                        } else {
+                            //OI中和物理库中都存在此表，比对字段是否相互存在
+                            Field existOIField = null;
+                            for (Field dbField : dbFields) {
+                                for (Field oiField : existOiView.getFields()) {
+                                    if (oiField.getFieldName().equalsIgnoreCase(dbField.getFieldName())) {
+                                        existOIField = oiField;
+                                    }
+                                }
+
+                                if (existOIField == null) {
+                                    //OI中缺少物理表中的字段
+                                    DiffItem diffItem = new DiffItem();
+                                    diffItem.setResource(dbView.getOi().getResource());
+                                    diffItem.setFieldName(dbField.getFieldName());
+                                    diffItem.setType("1");//type=1: 物理表存在，TY没有配置
+                                    diffItem.setDbField(dbField);
+                                    diffItemList.add(diffItem);
+                                }
+                            }
+                        }
+                    } else {
+                        //db这个表没有字段
+                    }
+                }
+
+            }
+        } else if (dbHaveSchema) {
+            //配置表里没有OI，直接返回需要添加的OI
+            for (OIView dbView : dbOIViews) {
+                //拉出oiView下面所有的字段
+                List<Field> dbFields = dbView.getFields();
+                if (CollectionUtil.isValid(dbFields)) {
+                    for (Field field : dbFields) {
+                        //生成diff元件
+                        DiffItem diffItem = new DiffItem();
+                        diffItem.setResource(dbView.getOi().getResource());
+                        diffItem.setFieldName(field.getFieldName());
+                        diffItem.setType("1");
+                        diffItem.setDbField(field);
+                        diffItemList.add(diffItem);
+                    }
+                }
+                //没有字段就跳过
+            }
+        } else {
+            //oi中没配置db中也没有schema
+        }
+
+        return diffItemList;
     }
 
     /**
@@ -1275,7 +1438,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //更新字段
-        MysqlSchemaUtil.updateField(ds,oi.getResource(),oldField,newField);
+        MysqlSchemaUtil.updateField(ds, oi.getResource(), oldField, newField);
     }
 
     /**

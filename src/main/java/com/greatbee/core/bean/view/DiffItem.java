@@ -1,5 +1,7 @@
 package com.greatbee.core.bean.view;
 
+import com.greatbee.core.bean.oi.Field;
+
 /**
  * 差异细节
  * <p/>
@@ -21,6 +23,10 @@ public class DiffItem {
     private String resource;
     //差异的相关字段
     private String fieldName;
+
+    private Field dbField;
+
+    private Field oiField;
 
     public String getType() {
         return type;
@@ -44,5 +50,21 @@ public class DiffItem {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    public void setDbField(Field dbField) {
+        this.dbField = dbField;
+    }
+
+    public void setOiField(Field oiField) {
+        this.oiField = oiField;
+    }
+
+    public Field getDbField() {
+        return dbField;
+    }
+
+    public Field getOiField() {
+        return oiField;
     }
 }
