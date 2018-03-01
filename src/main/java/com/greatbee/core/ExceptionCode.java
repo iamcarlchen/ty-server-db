@@ -10,6 +10,13 @@ public interface ExceptionCode {
     String TIP = "一键生成";
     //TY配置登录session
     String TY_SESSION_CONFIG_USER = "TY_SESSION_CONFIG_USER";
+    //inputField 模板 request数据
+    String TY_INPUTFIELD_TPL_REQUEST = "request";
+    //inputField 模板 session数据
+    String TY_INPUTFIELD_TPL_SESSION = "session";
+    //inputField 模板 节点数据
+    String TY_INPUTFIELD_TPL_NODE = "node";
+
     //没有登录session返回报错
     long CODE_NO_LOGIN_SESSION = -400;
 
@@ -23,6 +30,8 @@ public interface ExceptionCode {
     public static final long ERROR_API_NO_LEGO = 100002;
     public static final long ERROR_API_LEGO_CODE_NOT_FOUND = 100003;
     public static final long ERROR_API_METHOD_NOT_MATCH = 100004;
+    public static final long ERROR_API_CONFIG_NO_TPL = 100005;
+    public static final long ERROR_API_REQUEST_ENCODE = 100006;
 
     //DB的相关异常Code以2开头
     public static final long ERROR_DB_DS_NOT_FOUND = 200001;//数据源没有找到

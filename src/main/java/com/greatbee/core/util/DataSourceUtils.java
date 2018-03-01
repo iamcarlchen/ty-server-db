@@ -6,9 +6,8 @@ import com.greatbee.core.bean.constant.DSCF;
 import com.greatbee.core.bean.constant.DST;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.manager.DSManager;
-import org.apache.commons.dbcp2.BasicDataSource;
+import org.apache.tomcat.jdbc.pool.DataSource;
 
-import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -77,7 +76,9 @@ public class DataSourceUtils {
             __ds = dataSourceConfigs.get(ds.getAlias());
         } else {
 //            DriverManagerDataSource _ds = new DriverManagerDataSource();
-            BasicDataSource _ds = new BasicDataSource();
+//            BasicDataSource _ds = new BasicDataSource();
+            //换成tomcat-jdbc pool  多线程速度快   dbcp是单线程的
+            DataSource _ds = new DataSource();
 
             if (DST.Mysql.getType().equals(ds.getDst())) {
                 _ds.setDriverClassName(MYSQL_DRIVER);
@@ -121,7 +122,8 @@ public class DataSourceUtils {
             }
 
             ///设置空闲和借用的连接的最大总数量，同时可以激活。
-            _ds.setMaxTotal(maxTotal);
+//            _ds.setMaxTotal(maxTotal);
+            _ds.setMaxActive(maxTotal);
             //设置初始大小
             _ds.setInitialSize(initSize);
             //最小空闲连接
@@ -131,26 +133,29 @@ public class DataSourceUtils {
 
 
             //超时等待时间毫秒
-            _ds.setMaxWaitMillis(3*10000);
+//            _ds.setMaxWaitMillis(3*10000);
             //只会发现当前连接失效，再创建一个连接供当前查询使用
             _ds.setTestOnBorrow(true);
             //removeAbandonedTimeout  ：超过时间限制，回收没有用(废弃)的连接（默认为 300秒，调整为180）
             _ds.setRemoveAbandonedTimeout(300);
             //removeAbandoned  ：超过removeAbandonedTimeout时间后，是否进 行没用连接（废弃）的回收（默认为false，调整为true)
             //DATA_SOURCE.setRemoveAbandonedOnMaintenance(removeAbandonedOnMaintenance);
-            _ds.setRemoveAbandonedOnBorrow(true);
+//            _ds.setRemoveAbandonedOnBorrow(true);
             //testWhileIdle
-            _ds.setTestOnReturn(true);
+            _ds.setTestWhileIdle(true);
             //testOnReturn
             _ds.setTestOnReturn(true);
             //setRemoveAbandonedOnMaintenance
-            _ds.setRemoveAbandonedOnMaintenance(true);
+//            _ds.setRemoveAbandonedOnMaintenance(true);
             //记录日志
-            _ds.setLogAbandoned(true);
+//            _ds.setLogAbandoned(true);
             //设置自动提交
             _ds.setDefaultAutoCommit(true);
 
+            _ds.setValidationQuery("select 1 from dual");
+
             dataSourceConfigs.put(ds.getAlias(), _ds);
+
             __ds = _ds;
         }
         return __ds;

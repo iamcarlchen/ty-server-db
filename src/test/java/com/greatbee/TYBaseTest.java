@@ -1,7 +1,7 @@
 package com.greatbee;
 
 import junit.framework.TestCase;
-import org.apache.commons.dbcp2.BasicDataSource;
+import org.apache.tomcat.jdbc.pool.DataSource;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,7 +34,9 @@ public class TYBaseTest extends TestCase implements TestConfig {
     }
 
     public void testJDBC() {
-        BasicDataSource ds = new BasicDataSource();
+//        BasicDataSource ds = new BasicDataSource();
+        DataSource ds = new DataSource();
+
         ds.setDriverClassName("com.mysql.jdbc.Driver");
         ds.setUrl("jdbc:mysql://localhost:3306/ty?useUnicode=true&characterEncoding=utf8&autoReconnect=true&user=root&password=qazWSXedc&p");
         ds.setUsername("root");
