@@ -1211,12 +1211,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                     if (CollectionUtil.isValid(oiFields)) {
                         for (Field field : oiFields) {
                             //生成diff元件
-                            DiffItem diffItem = new DiffItem();
-                            diffItem.setResource(oiView.getOi().getResource());
-                            diffItem.setFieldName(field.getFieldName());
-                            diffItem.setType("2");
-                            diffItem.setOiField(field);
-                            diffItemList.add(diffItem);
+                            diffItemList.add(
+                                    new DiffItem("2", oiView.getOi().getResource(), field.getFieldName(), null, field));
                         }
                     }
                     //没有字段就跳过
@@ -1266,13 +1262,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                                         || !oiField.getDt().equalsIgnoreCase(existDBField.getDt())) {
                                     //字段长度或类型不一样的时候
                                     //生成diff元件
-                                    DiffItem diffItem = new DiffItem();
-                                    diffItem.setResource(oiView.getOi().getResource());
-                                    diffItem.setFieldName(oiField.getFieldName());
-                                    diffItem.setType("5");//type=5: TY表配置的字段和物理表配置的字段类型等参数不一致
-                                    diffItem.setOiField(oiField);
-                                    diffItem.setDbField(existDBField);
-                                    diffItemList.add(diffItem);
+                                    diffItemList.add(new DiffItem("5", oiView.getOi().getResource(),
+                                            oiField.getFieldName(), existDBField, oiField));
                                 }
                             }
                         }
@@ -1293,12 +1284,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                         if (existOiView == null) {
                             //oi中缺少物理库中存在的表
                             for (Field dbField : dbFields) {
-                                DiffItem diffItem = new DiffItem();
-                                diffItem.setResource(dbView.getOi().getResource());
-                                diffItem.setFieldName(dbField.getFieldName());
-                                diffItem.setType("1");//type=1: 物理表存在，TY没有配置
-                                diffItem.setDbField(dbField);
-                                diffItemList.add(diffItem);
+                                diffItemList.add(new DiffItem("1", dbView.getOi().getResource(), dbField.getFieldName(),
+                                        dbField, null));
                             }
                         } else {
                             //OI中和物理库中都存在此表，比对字段是否相互存在
@@ -1312,12 +1299,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
 
                                 if (existOIField == null) {
                                     //OI中缺少物理表中的字段
-                                    DiffItem diffItem = new DiffItem();
-                                    diffItem.setResource(dbView.getOi().getResource());
-                                    diffItem.setFieldName(dbField.getFieldName());
-                                    diffItem.setType("1");//type=1: 物理表存在，TY没有配置
-                                    diffItem.setDbField(dbField);
-                                    diffItemList.add(diffItem);
+                                    diffItemList.add(new DiffItem("1", dbView.getOi().getResource(),
+                                            dbField.getFieldName(), dbField, null));
                                 }
                             }
                         }
@@ -1335,12 +1318,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                 if (CollectionUtil.isValid(dbFields)) {
                     for (Field field : dbFields) {
                         //生成diff元件
-                        DiffItem diffItem = new DiffItem();
-                        diffItem.setResource(dbView.getOi().getResource());
-                        diffItem.setFieldName(field.getFieldName());
-                        diffItem.setType("1");
-                        diffItem.setDbField(field);
-                        diffItemList.add(diffItem);
+                        diffItemList.add(
+                                new DiffItem("1", dbView.getOi().getResource(), field.getFieldName(), field, null));
                     }
                 }
                 //没有字段就跳过

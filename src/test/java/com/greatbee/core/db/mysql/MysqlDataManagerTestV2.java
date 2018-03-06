@@ -50,10 +50,10 @@ public class MysqlDataManagerTestV2 extends DBBaseTest {
 
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
+    // @Override
+    // public void tearDown() throws Exception {
+    //     super.tearDown();
+    // }
 
 
     public void testRead() throws DBException {

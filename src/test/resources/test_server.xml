@@ -13,10 +13,10 @@
 
     <!-- Datasource-->
     <bean id="tyDS" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
-        <property name="driverClassName" value="${db.connection.driver_class}"/>
-        <property name="url" value="${db.connection.url}"/>
-        <property name="username" value="${db.connection.username}"/>
-        <property name="password" value="${db.connection.password}"/>
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/db_ty?useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;user=root&amp;password=&amp;zeroDateTimeBehavior=convertToNull&amp;tinyInt1isBit=false&amp;p"/>
+        <property name="username" value="root"/>
+        <property name="password" value=""/>
     </bean>
 
     <!--Hibernate Session Factory-->
@@ -30,9 +30,9 @@
         </property>
         <property name="hibernateProperties">
             <props>
-                <prop key="hibernate.generate_statistics">${db.hibernate.generate_statistics}</prop>
-                <prop key="hibernate.dialect">${db.hibernate.dialect}</prop>
-                <prop key="hibernate.show_sql">${db.hibernate.show_sql}</prop>
+                <prop key="hibernate.generate_statistics">true</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
                 <!--<prop key="hibernate.hbm2ddl.auto">${db.hibernate.hbm2ddl_auto}</prop>-->
                 <prop key="hibernate.cache.use_query_cache">false</prop>
                 <prop key="hibernate.cache.use_second_level_cache">false</prop>
