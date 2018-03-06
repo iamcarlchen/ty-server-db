@@ -20,7 +20,7 @@
     </bean>
 
     <!--Hibernate Session Factory-->
-    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+    <bean id="tySessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
         <property name="dataSource" ref="tyDS"/>
         <property name="mappingResources">
             <list>
@@ -44,7 +44,7 @@
 
 
     <!--TY Server-->
-    <!--<import resource="classpath:conf/ty_server.xml"/>-->
+
     <import resource="classpath:conf/ty_db_server.xml"/>
 
     <!-- 使用annotation 自动注册bean,并保证@Required,@Autowired的属性被注入 -->

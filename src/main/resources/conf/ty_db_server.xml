@@ -4,6 +4,19 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
+    <!--Hibernate Template base-->
+    <bean id="tyHibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+        <property name="sessionFactory" ref="tySessionFactory"/>
+    </bean>
+
+    <!--Abstract Manager base-->
+    <bean id="abstractBasicManager" class="com.greatbee.base.manager.ext.AbstractBasicManager" abstract="true">
+        <property name="hibernateTemplate" ref="tyHibernateTemplate"/>
+    </bean>
+
+    <!-- DS Manager-->
+    <bean id="dsManager" class="com.greatbee.core.manager.ext.SimpleDSManager" parent="abstractBasicManager"/>
+
     <!-- Mysql Data Manager-->
     <bean id="mysqlDataManager" class="com.greatbee.core.db.mysql.manager.MysqlDataManager"/>
 
