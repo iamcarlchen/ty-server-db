@@ -25,7 +25,7 @@
         <property name="mappingResources">
             <list>
                 <!--TY DB-->
-                <!--<value>conf/ty_db.xml</value>-->
+                <value>conf/ty_db.xml</value>
             </list>
         </property>
         <property name="hibernateProperties">

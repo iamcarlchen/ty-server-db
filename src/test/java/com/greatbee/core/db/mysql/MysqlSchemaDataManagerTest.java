@@ -34,7 +34,7 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
      */
     public void setUp() {
         super.setUp("test_server.xml");
-        super.setUp("ty_db_server.xml");
+        // super.setUp("ty_db_server.xml");
         //加载manager
         dsManager = (DSManager) context.getBean("dsManager");
         mysqlDataManager = (SchemaDataManager) context.getBean("mysqlDataManager");
@@ -57,8 +57,8 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
 
     public void initConn() throws DBException {
         // DSView dsView = this.getDSView();
-        Connection conn = null;
-        PreparedStatement ps = null;
+        // Connection conn = null;
+        // PreparedStatement ps = null;
         try {
             //初始化数据库连接
             DS ds = new DS();
@@ -106,6 +106,11 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
      * 初始化测试表
      */
     public void initTestTable(Connection conn, PreparedStatement ps) throws DBException, SQLException {
+
+        //drop table
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_category`;");
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_detail`;");
+
         StringBuilder queryBuilder = new StringBuilder();
         //创建文章分类表
         queryBuilder.append("CREATE TABLE `ly_article_category` (");
@@ -126,7 +131,10 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         queryBuilder.append("PRIMARY KEY (`id`)");
         queryBuilder.append(") ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
 
+        this.executeQuery(conn, ps, queryBuilder.toString());
+
         //创建文章表
+        queryBuilder = new StringBuilder();
         queryBuilder.append("CREATE TABLE `ly_article_detail` (");
         queryBuilder.append("`id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增长ID',");
         queryBuilder.append("`categoryId` varchar(64) DEFAULT NULL COMMENT '分类ID，对应分类表的categoryId',");
@@ -158,17 +166,46 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         queryBuilder.append("`serialNumber` varchar(128) DEFAULT NULL COMMENT '序列号，随机生成',");
         queryBuilder.append("PRIMARY KEY (`id`)");
         queryBuilder.append(") ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
-
-        ps = conn.prepareStatement(queryBuilder.toString());
-        ps.execute();
+        this.executeQuery(conn, ps, queryBuilder.toString());
         System.out.println("schema done!");
     }
 
     /**
      * 初始化测试数据
      */
-    public void initTestData(Connection conn, PreparedStatement ps) throws DBException {
+    public void initTestData(Connection conn, PreparedStatement ps) throws DBException, SQLException {
 
+        //插入文章分类数据
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `remark`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'zuixin', 'gonggao', '最新', 'null', '1', '1', '12345', '12345', '2017-01-01 00:00:00', '51029236', '龚子国', '2017-06-08 10:14:37', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'renming', 'gonggao', '任命', '1', '2', '12345', '12345', '2017-01-01 00:00:00', '51032636', '董隽晶', '2017-04-25 15:00:27', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'jiyao', 'gonggao', '纪要', '1', '3', '12345', '12345', '2017-01-01 00:00:00', '51032636', '董隽晶', '2017-04-25 14:49:23', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'jiangcheng', 'gonggao', '奖惩', '1', '4', '12345', '12345', '2017-01-01 00:00:00', '51032636', 'null', '2017-04-24 16:29:09', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'tongzhi', 'gonggao', '通知', '1', '5', '12345', '12345', '2017-01-01 00:00:00', '51029458', '张学超', '2017-04-25 15:17:17', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `remark`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( '97C64AA6', 'ROOT', '职工之家', 'null', '1', '1', '51029458', '张学超', '2017-04-27 20:48:24', '51031417', '戴金辉', '2017-04-28 16:52:50', '0');");
+
+        //插入文章数据
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '商户联盟“唱”出新声，吸金2亿六店“合”肥', '商户联合营销新物种——同城盛典', '', 'http://img2.mklimg.com/g1/M00/0E/09/rBBrBlkk8diAUxL2AADVkp69i6U351.jpg', '0', '0', '0', '1', '0', '2017-05-25 10:53:53', '', 'All', '', '', '1', '1', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-24 17:20:47', '', '2017-05-24 09:53:53', '0', 'CD3925553F0996965A5A1723CE423790');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `pushStatus`, `shareStatus`, `serialNumber`) VALUES ( '97C64AAA', '践行公益｜用爱心为生命加油！——集团总部员工撸起袖子无偿献血', '2017-05-24', '', 'http://img2.mklimg.com/g2/M00/0E/08/rBBrClkk6dKAaTI5AACBbQAU3_M577.jpg', '0', '0', '0', '2', '1', '2017-05-24 09:41:48', '', 'All', '', '', '1', '0', '51035039', '胡云江', '', '', '2017-05-24 10:04:17', '', '2017-05-24 10:04:17', '3', '0', '30E163A7B1A884E6B83184D969A432E8');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `pushStatus`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '设计师带客包场，4小时刷卡近3000万', '今晚吃火锅的', '', 'http://img1.mklimg.com/g2/M00/0E/10/rBBrClklOYuAG-p9AADYF56VFJI225.jpg', '0', '0', '0', '3', '1', '2017-05-25 17:14:00', '', 'All', '', '', '1', '0', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-25 17:08:59', '', '2017-05-24 10:52:39', '0', '0', '51CE02264CB8D85419BB018FA4DCD80C');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'BD70E74D', '融融端午情，红星家万兴，集团工会祝全体红星人节日快乐！', '2017-05-24', '', 'http://img2.mklimg.com/g2/M00/0E/0C/rBBrClklFyyAAdXtAABgdgAgde8955.jpg', '0', '0', '0', '0', '1', '2017-05-24 13:13:19', '', 'Department', '10000158', '集团总部-党工团-工会', '1', '0', '51035039', '胡云江', '51035039', '胡云江', '2017-05-24 16:34:12', '', '2017-05-24 13:17:08', '0', '529F4B2DC5F6E77BFC7E0BD378A676FB');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '人人都在转H5，只有她转出了RMB', '一样的朋友圈，一样的导购员，一样的H5，为啥业绩不一样？', '', 'http://img1.mklimg.com/g2/M00/0E/13/rBBrCVklTimAebk6AACAql7_oQY322.jpg', '0', '0', '0', '0', '0', '2017-05-24 15:47:52', '', 'All', '', '', '1', '0', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-24 17:18:51', '', '2017-05-24 15:47:52', '0', 'F30577EF6769A9CF4E91D96B0AB222F5');");
+
+    }
+
+    public void executeQuery(Connection conn, PreparedStatement ps, String querySql) throws SQLException {
+        ps = conn.prepareStatement(querySql);
+        ps.execute();
     }
 
     // public abstract DS getDS() throws DBException;
