@@ -9,8 +9,10 @@ import com.greatbee.DBBaseTest;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DST;
+import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
-import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.oi.Field;
+import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.DataSourceUtils;
@@ -25,9 +27,9 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     private String testConnectionPassword = "";
 
     private DSManager dsManager;
-    private SchemaDataManager mysqlDataManager;
-    private Connection conn = null;
-    private PreparedStatement ps = null;
+    public SchemaDataManager mysqlDataManager;
+    public Connection conn = null;
+    public PreparedStatement ps = null;
 
     /**
      * setUp 设置测试用例
@@ -55,21 +57,29 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     //     super.tearDown();
     // }
 
+    public DS getDS() {
+        DS _ds = new DS();
+        _ds.setName("测试数据源");
+        _ds.setAlias("test_mysql_datasource");
+        _ds.setDst(DST.Mysql.getType());
+        _ds.setConnectionUrl(testConnectionUrl);
+        _ds.setConnectionUsername(testConnectionUsername);
+        _ds.setConnectionPassword(testConnectionPassword);
+        return _ds;
+    }
+
     public void initConn() throws DBException {
         // DSView dsView = this.getDSView();
         // Connection conn = null;
         // PreparedStatement ps = null;
         try {
             //初始化数据库连接
-            DS ds = new DS();
-            ds.setName("测试数据源");
-            ds.setAlias("test_mysql_datasource");
-            ds.setDst(DST.Mysql.getType());
-            ds.setConnectionUrl(testConnectionUrl);
-            ds.setConnectionUsername(testConnectionUsername);
-            ds.setConnectionPassword(testConnectionPassword);
-            conn = DataSourceUtils.getDatasource(ds).getConnection();
-            ps = null;
+
+            // this.ds = _ds;
+            // System.out.println("ds alias = " + ds.getAlias());
+            this.conn = DataSourceUtils.getDatasource(this.getDS()).getConnection();
+            // this.ds = _ds;
+            this.ps = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,6 +120,7 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         //drop table
         this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_category`;");
         this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_detail`;");
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_base_app`;");
 
         StringBuilder queryBuilder = new StringBuilder();
         //创建文章分类表
@@ -167,6 +178,25 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         queryBuilder.append("PRIMARY KEY (`id`)");
         queryBuilder.append(") ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
         this.executeQuery(conn, ps, queryBuilder.toString());
+
+        queryBuilder = new StringBuilder();
+        queryBuilder.append("CREATE TABLE `ly_base_app` (");
+        queryBuilder.append("`appId` varchar(64) NOT NULL COMMENT '唯一不重复，自主填写',");
+        queryBuilder.append("`appSecretKey` varchar(256) DEFAULT NULL COMMENT '访问秘钥',");
+        queryBuilder.append("`appName` varchar(128) DEFAULT NULL COMMENT 'app名称',");
+        queryBuilder.append("`enable` tinyint(4) DEFAULT NULL COMMENT '0=关闭，1=启用',");
+        queryBuilder.append("`remark` varchar(256) DEFAULT NULL COMMENT '备注',");
+        queryBuilder.append("`contacts` varchar(128) DEFAULT NULL COMMENT '应用联系人',");
+        queryBuilder.append("`mainCharge` varchar(128) DEFAULT NULL COMMENT '应用负责人',");
+        queryBuilder.append("`contactsMobilePhone` varchar(128) DEFAULT NULL COMMENT '联系人电话',");
+        queryBuilder.append("`updateDate` datetime DEFAULT NULL COMMENT '更新时间',");
+        queryBuilder.append("`updateEmployeeCode` varchar(32) DEFAULT NULL COMMENT '更新员工code',");
+        queryBuilder.append("`updateEmployeeName` varchar(64) DEFAULT NULL COMMENT '更新员工姓名',");
+        queryBuilder.append("`deleteFlg` tinyint(2) DEFAULT NULL COMMENT '删除标识',");
+        queryBuilder.append("PRIMARY KEY (`appId`)");
+        queryBuilder.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        this.executeQuery(conn, ps, queryBuilder.toString());
+
         System.out.println("schema done!");
     }
 
@@ -208,13 +238,42 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         ps.execute();
     }
 
+    /**
+     * 初始化OI
+     */
+    protected OI initOI(String name, String alias, String resource) {
+        OI oi = new OI();
+        oi.setDsAlias(this.getDS().getAlias());
+        oi.setAlias(alias);
+        oi.setName(name);
+        oi.setResource(resource);
+        return oi;
+    }
+
+    /**
+     * 初始化字段
+     */
+    protected Field initField(OI oi, String name, String fieldName, DT dt, int fieldLength) {
+        return this.initField(oi, name, fieldName, dt, fieldLength, false);
+    }
+
+    /**
+     * 初始化字段
+     */
+    protected Field initField(OI oi, String name, String fieldName, DT dt, int fieldLength, boolean isPK) {
+        Field fId = new Field();
+        fId.setDt(dt.getType());
+        fId.setName(name);
+        fId.setFieldName(fieldName);
+        fId.setOiAlias(oi.getAlias());
+        fId.setFieldLength(fieldLength);
+        fId.setPk(isPK);
+        return fId;
+    }
+
     // public abstract DS getDS() throws DBException;
     // public abstract DSView getDsView() throws DBException;
 
-    //diff
-    // public void testDiff() throws DBException {
-
-    // }
 
     // //createTable
     // public void testCreateTable() throws DBException {

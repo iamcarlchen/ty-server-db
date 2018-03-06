@@ -21,7 +21,7 @@ public interface SchemaDataManager {
      *
      * @param ds
      * @return
-     * @throws DBException
+     * @throws DBException`
      */
     public List<DiffItem> diff(DSView dsView) throws DBException;
 
