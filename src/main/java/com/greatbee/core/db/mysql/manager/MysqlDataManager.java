@@ -1337,6 +1337,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
      */
     @Override
     public void createTable(OI oi, List<Field> dFields) throws DBException {
+        System.out.println("createTable->" + oi.getDsAlias());
         OIUtils.isValid(oi);
         //获取ds
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());

@@ -17,6 +17,8 @@ import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.DataSourceUtils;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  * 测试 Mysql Schema Data Manager
  */
@@ -26,7 +28,9 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     private String testConnectionUsername = "root";
     private String testConnectionPassword = "";
 
+    // @Autowired
     private DSManager dsManager;
+    // @Autowired
     public SchemaDataManager mysqlDataManager;
     public Connection conn = null;
     public PreparedStatement ps = null;
@@ -60,7 +64,7 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     public DS getDS() {
         DS _ds = new DS();
         _ds.setName("测试数据源");
-        _ds.setAlias("test_mysql_datasource");
+        _ds.setAlias("test_mysql");
         _ds.setDst(DST.Mysql.getType());
         _ds.setConnectionUrl(testConnectionUrl);
         _ds.setConnectionUsername(testConnectionUsername);
@@ -247,6 +251,7 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
         oi.setAlias(alias);
         oi.setName(name);
         oi.setResource(resource);
+
         return oi;
     }
 
@@ -273,17 +278,6 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
 
     // public abstract DS getDS() throws DBException;
     // public abstract DSView getDsView() throws DBException;
-
-
-    // //createTable
-    // public void testCreateTable() throws DBException {
-
-    // }
-
-    // //dropTable
-    // public void testDropTable() throws DBException {
-
-    // }
 
     // //addField
     // public void testAddField() throws DBException {

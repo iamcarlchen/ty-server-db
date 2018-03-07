@@ -19,9 +19,9 @@ public class OIUtils implements ExceptionCode {
         if (oi == null) {
             //无效的OI
             throw new DBException("OI数据无效", ERROR_DB_OI_INVAlID);
-        } else if (StringUtil.isValid(oi.getDsAlias())) {
+        } else if (StringUtil.isInvalid(oi.getDsAlias())) {
             throw new DBException("OI的DS为空", ERROR_DB_OI_DS_INVAlID);
-        } else if (StringUtil.isValid(oi.getAlias())) {
+        } else if (StringUtil.isInvalid(oi.getAlias())) {
             throw new DBException("OI的Alias为空", ERROR_DB_OI_ALIAS_INVAlID);
         }
     }

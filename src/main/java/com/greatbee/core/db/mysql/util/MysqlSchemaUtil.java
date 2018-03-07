@@ -126,13 +126,14 @@ public class MysqlSchemaUtil implements ExceptionCode {
      * 创建表
      */
     public static void createTable(DS ds, String tableName, List<Field> dbFields) throws DBException {
-        if (isTableExits(ds, tableName)) {
+        if (!isTableExits(ds, tableName)) {
             StringBuilder createSQL = new StringBuilder();
             //创建表语句构建
             createSQL.append(_buildCreateTableSql(ds, tableName, dbFields));
+            System.out.println(createSQL.toString());
             _executeQuery(ds, createSQL.toString());
         } else {
-            throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
+            throw new DBException("表已存在", ERROR_DB_TABLE_EXIST);
         }
     }
 
