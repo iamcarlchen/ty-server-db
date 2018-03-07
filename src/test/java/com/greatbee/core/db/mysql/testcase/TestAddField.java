@@ -23,6 +23,24 @@ public class TestAddField extends MysqlSchemaDataManagerTest implements Exceptio
 
     @Test
     public void testAddFieldByDefault() throws DBException {
+        OI oi = this.initOI("测试OI", "tb_test_add_field", "tb_test_add_field");
+        Field add_int_field = this.initField(oi, "add_int", "add_int", DT.INT, 11);
+        this.mysqlDataManager.addField(oi, add_int_field);
+
+        Field add_string_field = this.initField(oi, "add_string", "add_string", DT.String, 32);
+        this.mysqlDataManager.addField(oi, add_string_field);
+
+        Field add_time_field = this.initField(oi, "add_time", "add_time", DT.Time, 0);
+        this.mysqlDataManager.addField(oi, add_time_field);
+
+        Field add_date_field = this.initField(oi, "add_date", "add_date", DT.Date, 0);
+        this.mysqlDataManager.addField(oi, add_date_field);
+
+        Field add_boolean_field = this.initField(oi, "add_boolean", "add_boolean", DT.Boolean, 0);
+        this.mysqlDataManager.addField(oi, add_boolean_field);
+
+        Field add_double_field = this.initField(oi, "add_double", "add_double", DT.Double, 0);
+        this.mysqlDataManager.addField(oi, add_double_field);
 
     }
 

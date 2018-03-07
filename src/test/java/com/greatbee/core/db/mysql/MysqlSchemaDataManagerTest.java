@@ -279,10 +279,6 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     // public abstract DS getDS() throws DBException;
     // public abstract DSView getDsView() throws DBException;
 
-    // //addField
-    // public void testAddField() throws DBException {
-
-    // }
 
     // //dropField
     // public void testDropField() throws DBException {
