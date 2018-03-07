@@ -279,11 +279,7 @@ public abstract class MysqlSchemaDataManagerTest extends DBBaseTest implements E
     // public abstract DS getDS() throws DBException;
     // public abstract DSView getDsView() throws DBException;
 
-
-    // //dropField
-    // public void testDropField() throws DBException {
-
-    // }
+    
 
     // //updateField 更新字段名称
     // public void testUpdateField() throws DBException {

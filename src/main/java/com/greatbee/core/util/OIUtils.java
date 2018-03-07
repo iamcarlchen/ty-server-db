@@ -1,5 +1,6 @@
 package com.greatbee.core.util;
 
+import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
@@ -9,7 +10,6 @@ import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.OIView;
 
 import java.util.List;
-
 
 /**
  * Created by usagizhang on 18/1/22.
@@ -45,17 +45,22 @@ public class OIUtils implements ExceptionCode {
     public static boolean hasViewField(OIView oiView, String fieldName) throws DBException {
         isViewValid(oiView);
         if (StringUtil.isInvalid(fieldName)) {
+            // System.out.println("field name isInvalid");
             return false;
         }
         List<Field> fieldList = oiView.getFields();
         if (CollectionUtil.isInvalid(fieldList)) {
+            // System.out.println("oi field isInvalid");
             return false;
         }
         for (Field field : fieldList) {
-            if (field != null && StringUtil.isValid(field.getFieldName()) && field.getFieldName().equalsIgnoreCase(fieldName)) {
+            System.out.println(JSONObject.toJSONString(field));
+            if (field != null && StringUtil.isValid(field.getFieldName())
+                    && field.getFieldName().equalsIgnoreCase(fieldName)) {
                 return true;
             }
         }
+        // System.out.println("this field isInvalid");
         return false;
     }
 }

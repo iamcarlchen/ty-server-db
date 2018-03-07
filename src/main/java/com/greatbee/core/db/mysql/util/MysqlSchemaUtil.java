@@ -191,7 +191,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
         // alter table 表名称 change 字段名称 字段名称 字段类型 [是否允许非空];
         if (oldField.getFieldName().equalsIgnoreCase(newField.getFieldName())) {
             //字段名称不修改的情况
-            queryBuilder.append("alter table `").append(tableName).append("` change `").append(newField.getFieldName())
+            queryBuilder.append("alter table `").append(tableName).append("` MODIFY `").append(newField.getFieldName())
                     .append("` ").append(_getFieldSQLType(newField.getDt(), newField.getFieldLength()));
         } else {
             //字段名称修改的情况
@@ -207,7 +207,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
         //     queryBuilder.append(" ; ");
         // }
         queryBuilder.append(" ; ");
-
+        System.out.println(queryBuilder.toString());
         _executeQuery(ds, queryBuilder.toString());
 
     }
