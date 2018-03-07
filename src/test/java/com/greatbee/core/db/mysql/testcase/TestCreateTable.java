@@ -19,18 +19,28 @@ public class TestCreateTable extends MysqlSchemaDataManagerTest implements Excep
     private OI oi;
     private List<Field> dFields;
 
+    /**
+     * 初始化
+     */
+    public TestCreateTable() {
+        try {
+            this.setUp();
+            this.init();
+        } catch (DBException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void testCreateTableByDefault() throws DBException {
-        //初始化
-        this.setUp();
-        this.init();
+
         this.mysqlDataManager.createTable(this.oi, this.dFields);
     }
 
     /**
      * 初始化数据
      */
-    private void init() throws DBException {
+    public void init() throws DBException {
         try {
             this.initConn();
             this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `tb_test`;");
