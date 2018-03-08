@@ -17,6 +17,9 @@ import org.junit.Test;
 
 public class TestUpdateField extends MysqlSchemaDataManagerTest implements ExceptionCode {
 
+    /**
+     * 初始化
+     */
     public TestUpdateField() {
         this.setUp();
         this.init();
