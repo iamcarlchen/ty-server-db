@@ -43,19 +43,26 @@ public class SchemaExecute implements Lego, ExceptionCode {
         //获取schema执行的类型(默认单条执行)
         String executeData = StringUtil.getString(executeDataField.getFieldValue(), "{}");
 
-        if (executeType.equalsIgnoreCase("multiple")) {
-            // 批量执行
-            JSONArray executeDataArrayJSON = JSONArray.parseArray(executeData);
-            if (executeDataArrayJSON != null && executeDataArrayJSON.size() > 0) {
-                for (int i = 0; i < executeDataArrayJSON.size(); i++) {
-                    this.executeSchema(executeDataArrayJSON.getJSONObject(i));
+        try {
+            if (executeType.equalsIgnoreCase("multiple")) {
+                // 批量执行
+                JSONArray executeDataArrayJSON = JSONArray.parseArray(executeData);
+                if (executeDataArrayJSON != null && executeDataArrayJSON.size() > 0) {
+                    for (int i = 0; i < executeDataArrayJSON.size(); i++) {
+                        this.executeSchema(executeDataArrayJSON.getJSONObject(i));
+                    }
                 }
+            } else if (executeType.equalsIgnoreCase("single")) {
+                // 单体执行
+                JSONObject executeDataJSON = JSONObject.parseObject(executeData);
+                this.executeSchema(executeDataJSON);
             }
-        } else if (executeType.equalsIgnoreCase("single")) {
-            // 单体执行
-            JSONObject executeDataJSON = JSONObject.parseObject(executeData);
-            this.executeSchema(executeDataJSON);
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+            output.setOutputValue("execute", false);
         }
+        output.setOutputValue("execute", true);
 
     }
 
