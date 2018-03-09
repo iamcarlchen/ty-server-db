@@ -37,6 +37,9 @@ public class SchemaExecute implements Lego, ExceptionCode {
 
         //判断是单个执行还是批量执行
         InputField executeDataField = input.getInputField("executeData");
+        if (executeDataField == null) {
+            throw new LegoException("缺少字段 executeData", ERROR_FIELD_VALIDATE_PARAMS_INVALID);
+        }
         //获取schema执行的类型(默认单条执行)
         String executeData = StringUtil.getString(executeDataField.getFieldValue(), "{}");
 
@@ -59,7 +62,7 @@ public class SchemaExecute implements Lego, ExceptionCode {
     /**
      * 执行schema
      */
-    public void executeSchema(JSONObject executeDataJSON) throws LegoException {
+    private void executeSchema(JSONObject executeDataJSON) throws LegoException {
         if (executeDataJSON == null) {
             //参数缺少抛出异常
         }
