@@ -61,6 +61,7 @@ public class SchemaExecute implements Lego, ExceptionCode {
             //TODO: handle exception
             e.printStackTrace();
             output.setOutputValue("execute", false);
+            throw new LegoException(e.getMessage(), ERROR_LEGO_SCHEMA_EXECUTE_ERROR);
         }
         output.setOutputValue("execute", true);
 
@@ -76,27 +77,28 @@ public class SchemaExecute implements Lego, ExceptionCode {
         String operationType = executeDataJSON.getString("operationType");
         if (StringUtil.isInvalid(operationType)) {
             //参数缺少抛出异常
+            throw new LegoException("operationType参数无效", ERROR_LEGO_SCHEMA_EXECUTE_ERROR);
         }
         switch (operationType) {
 
-        case "createTable":
-            _createTable(executeDataJSON);
-            break;
-        case "dropTable":
-            _dropTable(executeDataJSON);
-            break;
-        case "addField":
-            _addField(executeDataJSON);
-            break;
-        case "dropField":
-            _dropField(executeDataJSON);
-            break;
-        case "updateField":
-            _updateField(executeDataJSON);
-            break;
-        default:
-            //没有的操作
-            break;
+            case "createTable":
+                _createTable(executeDataJSON);
+                break;
+            case "dropTable":
+                _dropTable(executeDataJSON);
+                break;
+            case "addField":
+                _addField(executeDataJSON);
+                break;
+            case "dropField":
+                _dropField(executeDataJSON);
+                break;
+            case "updateField":
+                _updateField(executeDataJSON);
+                break;
+            default:
+                //没有的操作
+                break;
         }
     }
 
