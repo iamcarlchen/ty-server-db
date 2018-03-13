@@ -639,14 +639,7 @@ public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDa
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), e.getCode());
             } finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                    }
-                }
+                this.releasePreparedStatement(ps);
                 this.releaseConnection(conn);
             }
         }

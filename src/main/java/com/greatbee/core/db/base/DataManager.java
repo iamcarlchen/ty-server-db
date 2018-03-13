@@ -35,12 +35,6 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     private static Logger logger = Logger.getLogger(DataManager.class);
 
-    /**
-     * dsManager 直接链接nvwa配置库,主要用于获取connection
-     */
-    @Autowired
-    private DSManager dsManager;
-
     @Override
     public Data read(ConnectorTree connectorTree) throws DBException {
         DataList dl = this.list(connectorTree);

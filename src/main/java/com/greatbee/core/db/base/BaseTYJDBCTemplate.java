@@ -7,8 +7,10 @@ import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.manager.DSManager;
+import com.greatbee.core.util.DataSourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * Created by usagizhang on 18/3/13.
  */
-public class BaseTYJDBCTemplate {
+public class BaseTYJDBCTemplate implements ExceptionCode {
 
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection
@@ -90,6 +92,22 @@ public class BaseTYJDBCTemplate {
                 && (field.getFieldValue().length() > field.getFieldLength())) {
             throw new DBException("字段值长度超过字段限制长度", ExceptionCode.ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
         }
+    }
+
+    /**
+     * 根据DS的alias获取数据库连接
+     *
+     * @param dataSourceAlias
+     * @return
+     * @throws SQLException
+     * @throws DBException
+     */
+    protected Connection getConnection(String dataSourceAlias) throws SQLException, DBException {
+        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
+        if (_ds == null) {
+            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
+        }
+        return _ds.getConnection();
     }
 
 

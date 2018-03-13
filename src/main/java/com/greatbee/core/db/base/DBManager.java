@@ -33,166 +33,138 @@ public abstract class DBManager extends BaseTYJDBCTemplate implements ExceptionC
 
     private static Logger logger = Logger.getLogger(DBManager.class);
 
-    /**
-     * dsManager 直接链接nvwa配置库,主要用于获取connection
-     */
-    @Autowired
-    private DSManager dsManager;
 
     protected DataList executeListQuery(String dataSourceAlias, QueryHandler queryHandler, DataHandler dataHandler) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
-        } else {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-            try {
-                conn = _ds.getConnection();
-                ps = queryHandler.execute(conn, ps);
-                rs = ps.executeQuery();
-                ArrayList list = new ArrayList();
+        try {
+            conn = this.getConnection(dataSourceAlias);
+            ps = queryHandler.execute(conn, ps);
+            rs = ps.executeQuery();
+            ArrayList list = new ArrayList();
 
 
-                while (rs.next()) {
-                    Data item = new Data();
-                    dataHandler.execute(rs, item);
-                    list.add(item);
-                }
-
-                DataList dataList = new DataList(list);
-                return dataList;
-            } catch (SQLException exception) {
-                exception.printStackTrace();
-                throw new DBException(exception.getMessage(), ERROR_DB_SQL_EXCEPTION);
-            } finally {
-                this.releaseResultSet(rs);
-                this.releasePreparedStatement(ps);
-                this.releaseConnection(conn);
+            while (rs.next()) {
+                Data item = new Data();
+                dataHandler.execute(rs, item);
+                list.add(item);
             }
+
+            DataList dataList = new DataList(list);
+            return dataList;
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+            throw new DBException(exception.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
     protected DataPage executePageQuery(String dataSourceAlias, int page, int pageSize, int count, QueryHandler queryHandler, DataHandler dataHandler) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
-        } else {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-            DataPage result = new DataPage();
-            try {
-                conn = _ds.getConnection();
-                ps = queryHandler.execute(conn, ps);
-                rs = ps.executeQuery();
-                System.out.println("总记录数：" + count);
-                ArrayList list = new ArrayList();
-                while (rs.next()) {
-                    Data data = new Data();
-                    dataHandler.execute(rs, data);
-                    list.add(data);
-                }
-
-                DataPage dataPage = new DataPage();
-                dataPage.setCurrentPage(page);
-                dataPage.setCurrentRecords(list);
-                dataPage.setCurrentRecordsNum(list.size());
-                dataPage.setPageSize(pageSize);
-                dataPage.setTotalPages(count % pageSize > 0 ? count / pageSize + 1 : count / pageSize);
-                dataPage.setTotalRecords(count);
-                result = dataPage;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-            } finally {
-                this.releaseResultSet(rs);
-                this.releasePreparedStatement(ps);
-                this.releaseConnection(conn);
+        DataPage result = new DataPage();
+        try {
+            conn = this.getConnection(dataSourceAlias);
+            ps = queryHandler.execute(conn, ps);
+            rs = ps.executeQuery();
+            System.out.println("总记录数：" + count);
+            ArrayList list = new ArrayList();
+            while (rs.next()) {
+                Data data = new Data();
+                dataHandler.execute(rs, data);
+                list.add(data);
             }
 
-            return result;
+            DataPage dataPage = new DataPage();
+            dataPage.setCurrentPage(page);
+            dataPage.setCurrentRecords(list);
+            dataPage.setCurrentRecordsNum(list.size());
+            dataPage.setPageSize(pageSize);
+            dataPage.setTotalPages(count % pageSize > 0 ? count / pageSize + 1 : count / pageSize);
+            dataPage.setTotalRecords(count);
+            result = dataPage;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
+
+        return result;
     }
 
     protected Data executeReadQuery(String dataSourceAlias, QueryHandler queryHandler, DataHandler dataHandler) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
-        } else {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
 
-            try {
-                conn = _ds.getConnection();
-                ps = queryHandler.execute(conn, ps);
-                rs = ps.executeQuery();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-                Data result = new Data();
-                if (rs.next()) {
-                    dataHandler.execute(rs, result);
-                }
-                return result;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-            } finally {
-                this.releaseConnection(conn);
+        try {
+            conn = this.getConnection(dataSourceAlias);
+            ps = queryHandler.execute(conn, ps);
+            rs = ps.executeQuery();
+
+            Data result = new Data();
+            if (rs.next()) {
+                dataHandler.execute(rs, result);
             }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this.releaseConnection(conn);
         }
     }
 
     protected int executCountQuery(String dataSourceAlias, QueryHandler handler) throws DBException {
         int result = 0;
-        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
-        } else {
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
 
-            try {
-                conn = _ds.getConnection();
-                ps = handler.execute(conn, ps);
-                for (rs = ps.executeQuery(); rs.next(); result = rs.getInt(1)) {
-                    ;
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-            } finally {
-                this.releaseResultSet(rs);
-                this.releasePreparedStatement(ps);
-                this.releaseConnection(conn);
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = this.getConnection(dataSourceAlias);
+            ps = handler.execute(conn, ps);
+            for (rs = ps.executeQuery(); rs.next(); result = rs.getInt(1)) {
+                ;
             }
-
-            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
+
+        return result;
     }
 
     protected void executUpdateQuery(String dataSourceAlias, QueryHandler handler) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(dataSourceAlias, this.dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ERROR_DB_DS_NOT_FOUND);
-        } else {
-            Connection conn = null;
-            PreparedStatement ps = null;
+        Connection conn = null;
+        PreparedStatement ps = null;
 
-            try {
-                conn = _ds.getConnection();
-                ps = handler.execute(conn, ps);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
-            } finally {
-                this.releasePreparedStatement(ps);
-                this.releaseConnection(conn);
-            }
+        try {
+            conn = this.getConnection(dataSourceAlias);
+            ps = handler.execute(conn, ps);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+        } finally {
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
