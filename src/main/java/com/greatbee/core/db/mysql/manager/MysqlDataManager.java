@@ -57,19 +57,13 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
 
     @Override
     public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
-        if (ds == null) {
-            //ds没有传入
-            throw new DBException("ds没有传入", ERROR_DB_DS_NOT_FOUND);
-        } else if (CollectionUtil.isInvalid(transactionNodes)) {
+        if (CollectionUtil.isInvalid(transactionNodes)) {
             //没有需要执行的事务组件
             throw new DBException("没有需要执行的事务组件", ERROR_DB_DS_NOT_FOUND);
         }
-        DataSource _ds = DataSourceUtils.getDatasource(ds.getAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
         Connection conn = null;
         try {
+            conn = this.getConnection(ds.getAlias());
             /**
              * 禁止自动提交
              */
@@ -96,8 +90,6 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
         } finally {
             this.releaseConnection(conn);
         }
-
-
     }
 
 
