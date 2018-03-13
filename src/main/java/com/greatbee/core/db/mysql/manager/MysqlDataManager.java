@@ -35,6 +35,7 @@ import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.db.base.BaseTYJDBCTemplate;
+import com.greatbee.core.db.base.DataManager;
 import com.greatbee.core.db.mysql.transaction.MysqlDeleteTransaction;
 import com.greatbee.core.db.mysql.transaction.MysqlUpdateTransaction;
 import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
@@ -50,409 +51,9 @@ import org.apache.log4j.Logger;
  * <p>
  * Created by CarlChen on 2016/12/19.
  */
-public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDataManager, SchemaDataManager, ExceptionCode {
+public class MysqlDataManager extends DataManager implements RelationalDataManager, SchemaDataManager {
 
     private static Logger logger = Logger.getLogger(MysqlDataManager.class);
-
-    public Data read(OI oi, List<Field> fields, Field pkField) throws DBException {
-
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("SELECT ");
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(" , ");
-                }
-                String fieldName = field.getFieldName();
-                sql.append(" `").append(fieldName).append("` ");
-            }
-            sql.append(" FROM `").append(oi.getResource()).append("` ");
-            // SQL Value用?处理
-            sql.append(" WHERE `").append(pkField.getFieldName()).append("`=? ");
-
-            logger.info("读取对象SQL：" + sql.toString());
-
-            ps = conn.prepareStatement(sql.toString());
-            _setPsParamPk(1, ps, pkField);
-            rs = ps.executeQuery();
-
-            Data map = new Data();
-            while (rs.next()) {
-                for (Field _f : fields) {
-                    String _dt = _f.getDt();
-                    if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getBoolean(_f.getFieldName()));
-                    } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDouble(_f.getFieldName()));
-                    } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getInt(_f.getFieldName()));
-                    } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Timestamp ts = rs.getTimestamp(_f.getFieldName());
-                        map.put(_f.getFieldName(), ts == null ? "" : (sdf.format(ts)));
-                    } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDate(_f.getFieldName()));
-                    } else {
-                        map.put(_f.getFieldName(), rs.getString(_f.getFieldName()));
-                    }
-                }
-            }
-            return map;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseConnection(conn);
-        }
-    }
-
-    /**
-     * 分页查询 获取总记录条数
-     *
-     * @param oi
-     * @param condition
-     * @return
-     */
-    private int _pageTotalCount(OI oi, Condition condition) throws DBException {
-        int result = 0;
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("SELECT count(*) ");
-
-            sql.append(" FROM `").append(oi.getResource()).append("` ");
-            if (condition != null) {
-                sql.append(" WHERE ");
-                Condition.buildConditionSql(sql, condition);
-            }
-
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getInt(1);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-        return result;
-    }
-
-    public DataPage page(OI oi, List<Field> fields, int page, int pageSize, Condition condition) throws DBException {
-
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("SELECT ");
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(" , ");
-                }
-                String fieldName = field.getFieldName();
-                sql.append(" `").append(fieldName).append("` ");
-            }
-            sql.append(" FROM `").append(oi.getResource()).append("` ");
-            if (condition != null) {
-                sql.append(" WHERE ");
-                Condition.buildConditionSql(sql, condition);
-            }
-            sql.append(" LIMIT ?,? ");
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
-            //分页参数
-            ps.setInt(index, (page - 1) * pageSize);
-            ps.setInt(index + 1, pageSize);
-
-            rs = ps.executeQuery();
-
-            int count = _pageTotalCount(oi, condition);
-            System.out.println("总记录数：" + count);
-
-            List<Data> list = new ArrayList<Data>();
-            while (rs.next()) {
-                Data map = new Data();
-                for (Field _f : fields) {
-                    String _dt = _f.getDt();
-                    if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getBoolean(_f.getFieldName()));
-                    } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDouble(_f.getFieldName()));
-                    } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getInt(_f.getFieldName()));
-                    } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Timestamp ts = rs.getTimestamp(_f.getFieldName());
-                        map.put(_f.getFieldName(), ts == null ? "" : (sdf.format(ts)));
-                    } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDate(_f.getFieldName()));
-                    } else {
-                        map.put(_f.getFieldName(), rs.getString(_f.getFieldName()));
-                    }
-                }
-                list.add(map);
-            }
-            DataPage dp = new DataPage();
-            dp.setCurrentPage(page);
-            dp.setCurrentRecords(list);
-            dp.setCurrentRecordsNum(list.size());
-            dp.setPageSize(pageSize);
-            dp.setTotalPages((count % pageSize > 0) ? (count / pageSize + 1) : count / pageSize);
-            dp.setTotalRecords(count);
-            return dp;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-
-    }
-
-    public DataList list(OI oi, List<Field> fields, Condition condition) throws DBException {
-
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("SELECT ");
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(" , ");
-                }
-                String fieldName = field.getFieldName();
-                sql.append(" `").append(fieldName).append("` ");
-            }
-            sql.append(" FROM `").append(oi.getResource()).append("` ");
-            if (condition != null) {
-                sql.append(" WHERE ");
-                Condition.buildConditionSql(sql, condition);
-            }
-
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
-            rs = ps.executeQuery();
-
-            List<Data> list = new ArrayList<Data>();
-            while (rs.next()) {
-                Data map = new Data();
-                for (Field _f : fields) {
-                    String _dt = _f.getDt();
-                    if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getBoolean(_f.getFieldName()));
-                    } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDouble(_f.getFieldName()));
-                    } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getInt(_f.getFieldName()));
-                    } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Timestamp ts = rs.getTimestamp(_f.getFieldName());
-                        map.put(_f.getFieldName(), ts == null ? "" : (sdf.format(ts)));
-                    } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                        map.put(_f.getFieldName(), rs.getDate(_f.getFieldName()));
-                    } else {
-                        map.put(_f.getFieldName(), rs.getString(_f.getFieldName()));
-                    }
-                }
-                list.add(map);
-            }
-            return new DataList(list);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
-
-    public void delete(OI oi, Field pkField) throws DBException {
-        // 删除SQL
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        try {
-            BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, pkField);
-            transaction.execute(conn);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
-
-    public void delete(OI oi, Condition condition) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        try {
-            conn = _ds.getConnection();
-            BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, condition);
-            transaction.execute(conn);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
-
-    /**
-     * 创建数据
-     *
-     * @param oi
-     * @param fields
-     * @return 返回创建数据的唯一ID
-     */
-    public String create(OI oi, List<Field> fields) throws DBException {
-        // 通过OI,fields拼装SQL
-
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("INSERT INTO ");
-            sql.append(oi.getResource()).append("(");
-            StringBuilder valueStr = new StringBuilder();
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(",");
-                    valueStr.append(",");
-                }
-                sql.append("`").append(field.getFieldName()).append("`");
-                valueStr.append(" ? ");
-                _checkFieldLengthOverLimit(field);
-            }
-            sql.append(") VALUES(");
-            sql.append(valueStr);
-            sql.append(")");
-
-            logger.info("创建对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);//返回主键
-            _setPsParam(1, ps, fields);
-            ps.executeUpdate();
-
-            rs = ps.getGeneratedKeys();
-            int id = 0;
-            if (rs.next()) {
-                id = rs.getInt(1);
-            }
-            return String.valueOf(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
-
-    /**
-     * fields 只要是fields里有的字段都会更新，包括主键，所以这里应该不能传主键或者不可修改的字段进来
-     *
-     * @param oi
-     * @param fields
-     * @param pkField
-     */
-    public void update(OI oi, List<Field> fields, Field pkField) throws DBException {
-        // 更新SQL
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        try {
-            conn = _ds.getConnection();
-            BaseTransactionTemplate transaction = new MysqlUpdateTransaction(oi, fields, pkField);
-            transaction.execute(conn);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseConnection(conn);
-        }
-    }
-
-    public void update(OI oi, List<Field> fields, Condition condition) throws DBException {
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        try {
-            conn = _ds.getConnection();
-            BaseTransactionTemplate transactionTemplate = new MysqlUpdateTransaction(oi, fields, condition);
-            transactionTemplate.execute(conn);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
 
     @Override
     public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
@@ -607,6 +208,246 @@ public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDa
         }
     }
 
+    @Override
+    public PreparedStatement buildingPageQuery(int page, int pageSize, ConnectorTree connectorTree, Connection conn, PreparedStatement ps) throws SQLException {
+        String sql = BuildUtils.buildAllSql(connectorTree);
+        sql = sql + " LIMIT ?,? ";
+        logger.info("查询对象SQL：" + sql);
+        ps = conn.prepareStatement(sql);//返回主键
+        int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+        //分页参数
+        ps.setInt(index, (page - 1) * pageSize);
+        ps.setInt(index + 1, pageSize);
+        return ps;
+    }
+
+    @Override
+    public void buildingDataObject(ResultSet rs, Map.Entry entry, Data data) throws SQLException {
+        String _dt = DT.String.getType();
+        if (entry.getValue() != null) {
+            _dt = ((Field) entry.getValue()).getDt();
+        }
+        if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
+            data.put(entry.getKey().toString(), Boolean.valueOf(rs.getBoolean((String) entry.getKey())));
+        } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
+            data.put(entry.getKey().toString(), Double.valueOf(rs.getDouble((String) entry.getKey())));
+        } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
+            data.put(entry.getKey().toString(), Integer.valueOf(rs.getInt((String) entry.getKey())));
+        } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Timestamp ts = rs.getTimestamp((String) entry.getKey());
+            data.put(entry.getKey().toString(), ts == null ? "" : sdf.format(ts));
+        } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
+            data.put(entry.getKey().toString(), rs.getDate((String) entry.getKey()));
+        } else {
+            data.put(entry.getKey().toString(), rs.getString((String) entry.getKey()));
+        }
+    }
+
+    @Override
+    public PreparedStatement buildingListQuery(ConnectorTree connectorTree, Connection conn, PreparedStatement ps) throws SQLException {
+        String sql = BuildUtils.buildAllSql(connectorTree);
+        logger.info("查询对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString());//返回主键
+        int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+        return ps;
+    }
+
+    @Override
+    public PreparedStatement buildingCountQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT count(*) ");
+
+        sql.append(" FROM `").append(oi.getResource()).append("` ");
+        if (condition != null) {
+            sql.append(" WHERE ");
+            Condition.buildConditionSql(sql, condition);
+        }
+
+        logger.info("查询对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString());//返回主键
+        int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
+        return ps;
+    }
+
+    @Override
+    public PreparedStatement buildingCountQuery(ConnectorTree connectorTree, Connection conn, PreparedStatement ps) throws SQLException {
+
+        //是否有group by 的组数计算,如果是有group by 总数需要再套一层
+        boolean hasGroupBy = BuildUtils.checkGroupBy(connectorTree);
+        StringBuilder sql = new StringBuilder("SELECT count(*) ");
+        if (hasGroupBy) {
+            sql.append(" FROM (SELECT count(*) ");
+        }
+        sql.append(BuildUtils.buildConnector(connectorTree));
+        sql.append(BuildUtils.buildCondition(connectorTree));
+        sql.append(BuildUtils.buildGroupBy(connectorTree));
+        if (hasGroupBy) {
+            sql.append(" ) as tmpTb");
+        }
+
+        logger.info("查询对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString());//返回主键
+        int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
+        return ps;
+    }
+
+    @Override
+    public PreparedStatement buildingReadQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (i > 0) {
+                sql.append(" , ");
+            }
+            String fieldName = field.getFieldName();
+            sql.append(" `").append(fieldName).append("` ");
+        }
+        sql.append(" FROM `").append(oi.getResource()).append("` ");
+        // SQL Value用?处理
+        sql.append(" WHERE `").append(pkField.getFieldName()).append("`=? ");
+
+        logger.info("读取对象SQL：" + sql.toString());
+
+        ps = conn.prepareStatement(sql.toString());
+        _setPsParamPk(1, ps, pkField);
+        return ps;
+    }
+
+    @Override
+    public PreparedStatement buildingListQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (i > 0) {
+                sql.append(" , ");
+            }
+            String fieldName = field.getFieldName();
+            sql.append(" `").append(fieldName).append("` ");
+        }
+        sql.append(" FROM `").append(oi.getResource()).append("` ");
+        if (condition != null) {
+            sql.append(" WHERE ");
+            Condition.buildConditionSql(sql, condition);
+        }
+
+        logger.info("查询对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString());//返回主键
+        int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
+        return ps;
+    }
+
+    @Override
+    public PreparedStatement buildingPageQuery(OI oi, List<Field> fields, int page, int pageSize, Condition condition, Connection conn, PreparedStatement ps) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (i > 0) {
+                sql.append(" , ");
+            }
+            String fieldName = field.getFieldName();
+            sql.append(" `").append(fieldName).append("` ");
+        }
+        sql.append(" FROM `").append(oi.getResource()).append("` ");
+        if (condition != null) {
+            sql.append(" WHERE ");
+            Condition.buildConditionSql(sql, condition);
+        }
+        sql.append(" LIMIT ?,? ");
+        logger.info("查询对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString());//返回主键
+        int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
+        //分页参数
+        ps.setInt(index, (page - 1) * pageSize);
+        ps.setInt(index + 1, pageSize);
+        return ps;
+    }
+
+    @Override
+    public void buildingDataObject(ResultSet rs, List<Field> fields, Data data) throws SQLException {
+        while (rs.next()) {
+            Data map = new Data();
+            for (Field _f : fields) {
+                String _dt = _f.getDt();
+                if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
+                    map.put(_f.getFieldName(), rs.getBoolean(_f.getFieldName()));
+                } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
+                    map.put(_f.getFieldName(), rs.getDouble(_f.getFieldName()));
+                } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
+                    map.put(_f.getFieldName(), rs.getInt(_f.getFieldName()));
+                } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    Timestamp ts = rs.getTimestamp(_f.getFieldName());
+                    map.put(_f.getFieldName(), ts == null ? "" : (sdf.format(ts)));
+                } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
+                    map.put(_f.getFieldName(), rs.getDate(_f.getFieldName()));
+                } else {
+                    map.put(_f.getFieldName(), rs.getString(_f.getFieldName()));
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException, DBException {
+        BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, condition);
+        transaction.execute(conn);
+        return null;
+    }
+
+    @Override
+    public String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) throws SQLException, DBException {
+        StringBuilder sql = new StringBuilder("INSERT INTO ");
+        sql.append(oi.getResource()).append("(");
+        StringBuilder valueStr = new StringBuilder();
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (i > 0) {
+                sql.append(",");
+                valueStr.append(",");
+            }
+            sql.append("`").append(field.getFieldName()).append("`");
+            valueStr.append(" ? ");
+            _checkFieldLengthOverLimit(field);
+        }
+        sql.append(") VALUES(");
+        sql.append(valueStr);
+        sql.append(")");
+
+        logger.info("创建对象SQL：" + sql.toString());
+        ps = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);//返回主键
+        _setPsParam(1, ps, fields);
+        ps.executeUpdate();
+        ResultSet rs = null;
+        rs = ps.getGeneratedKeys();
+        int id = 0;
+        if (rs.next()) {
+            id = rs.getInt(1);
+        }
+        return String.valueOf(id);
+    }
+
+    @Override
+    public PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException, DBException {
+        BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, pkField);
+        transaction.execute(conn);
+        return null;
+    }
+
+    @Override
+    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws DBException, SQLException {
+        BaseTransactionTemplate transaction = new MysqlUpdateTransaction(oi, fields, pkField);
+        transaction.execute(conn);
+        return null;
+    }
+
+    @Override
+    public PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Condition condition, Connection conn, PreparedStatement ps) throws DBException, SQLException {
+        BaseTransactionTemplate transactionTemplate = new MysqlUpdateTransaction(oi, fields, condition);
+        transactionTemplate.execute(conn);
+        return null;
+    }
+
     /**
      * drop data table  正在testcase的时候用到了
      * 删除数据表
@@ -653,205 +494,6 @@ public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDa
             return datas.get(0);
         } else {
             return new Data();
-        }
-    }
-
-    /**
-     * 分页查询 获取总记录条数
-     *
-     * @param cont
-     * @return
-     * @throws DBException
-     */
-    @Override
-    public int count(ConnectorTree cont) throws DBException {
-        if (cont == null || cont.getOi() == null) {
-            throw new DBException("查询条件无效", ExceptionCode.ERROR_DB_CONT_IS_NULL);
-        }
-        OI oi = cont.getOi();
-        int result = 0;
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-            //是否有group by 的组数计算,如果是有group by 总数需要再套一层
-            boolean hasGroupBy = BuildUtils.checkGroupBy(cont);
-            StringBuilder sql = new StringBuilder("SELECT count(*) ");
-            if (hasGroupBy) {
-                sql.append(" FROM (SELECT count(*) ");
-            }
-            sql.append(BuildUtils.buildConnector(cont));
-            sql.append(BuildUtils.buildCondition(cont));
-            sql.append(BuildUtils.buildGroupBy(cont));
-            if (hasGroupBy) {
-                sql.append(" ) as tmpTb");
-            }
-
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = BuildUtils.buildTreeConditionPs(1, ps, cont);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-        return result;
-    }
-
-    @Override
-    public DataPage page(int page, int pageSize, ConnectorTree connectorTree) throws DBException {
-        if (connectorTree == null || connectorTree.getOi() == null) {
-            throw new DBException("查询条件无效", ExceptionCode.ERROR_DB_CONT_IS_NULL);
-        }
-        OI oi = connectorTree.getOi();
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-
-            String sql = BuildUtils.buildAllSql(connectorTree);
-            sql = sql + " LIMIT ?,? ";
-            logger.info("查询对象SQL：" + sql);
-            ps = conn.prepareStatement(sql);//返回主键
-            int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
-            //分页参数
-            ps.setInt(index, (page - 1) * pageSize);
-            ps.setInt(index + 1, pageSize);
-
-            rs = ps.executeQuery();
-
-            int count = count(connectorTree);
-            System.out.println("总记录数：" + count);
-
-            List<Data> list = new ArrayList<Data>();
-            Map<String, Field> map = new HashMap<String, Field>();
-            BuildUtils.buildAllFields(connectorTree, map);
-            while (rs.next()) {
-                Data item = new Data();
-                for (Map.Entry<String, Field> entry : map.entrySet()) {
-                    String _dt = DT.String.getType();
-                    if (entry.getValue() != null) {
-                        _dt = entry.getValue().getDt();
-                    }
-                    if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getBoolean(entry.getKey()));
-                    } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getDouble(entry.getKey()));
-                    } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getInt(entry.getKey()));
-                    } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Timestamp ts = rs.getTimestamp(entry.getKey());
-                        item.put(entry.getKey(), (ts == null ? "" : sdf.format(ts)));
-                    } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getDate(entry.getKey()));
-                    } else {
-                        item.put(entry.getKey(), rs.getString(entry.getKey()));
-                    }
-                }
-                list.add(item);
-            }
-
-            DataPage dp = new DataPage();
-            dp.setCurrentPage(page);
-            dp.setCurrentRecords(list);
-            dp.setCurrentRecordsNum(list.size());
-            dp.setPageSize(pageSize);
-            dp.setTotalPages((count % pageSize > 0) ? (count / pageSize + 1) : count / pageSize);
-            dp.setTotalRecords(count);
-            return dp;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
-        }
-    }
-
-    @Override
-    public DataList list(ConnectorTree connectorTree) throws DBException {
-        if (connectorTree == null || connectorTree.getOi() == null) {
-            throw new DBException("查询条件无效", ExceptionCode.ERROR_DB_CONT_IS_NULL);
-        }
-        OI oi = connectorTree.getOi();
-        DataSource _ds = DataSourceUtils.getDatasource(oi.getDsAlias(), dsManager);
-        if (_ds == null) {
-            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = _ds.getConnection();
-            String sql = BuildUtils.buildAllSql(connectorTree);
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = BuildUtils.buildTreeConditionPs(1, ps, connectorTree);
-
-            //            String tomcatJdbcPsSql = ps.toString().split(";")[2];
-            //            String realSql = tomcatJdbcPsSql.substring(tomcatJdbcPsSql.indexOf(":")+1,tomcatJdbcPsSql.length()-1);
-            //            JdbcTemplate jdbcTemplate = new JdbcTemplate();
-            //            jdbcTemplate.setDataSource(_ds);
-            //            List<Map<String, Object>> list = jdbcTemplate.queryForList(realSql);
-
-            rs = ps.executeQuery();
-            List<Data> list = new ArrayList<Data>();
-            Map<String, Field> map = new HashMap<String, Field>();
-            BuildUtils.buildAllFields(connectorTree, map);
-            while (rs.next()) {
-                Data item = new Data();
-
-                for (Map.Entry<String, Field> entry : map.entrySet()) {
-                    String _dt = DT.String.getType();
-                    if (entry.getValue() != null) {
-                        _dt = entry.getValue().getDt();
-                    }
-                    if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getBoolean(entry.getKey()));
-                    } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getDouble(entry.getKey()));
-                    } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getInt(entry.getKey()));
-                    } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Timestamp ts = rs.getTimestamp(entry.getKey());
-                        item.put(entry.getKey(), (ts == null ? "" : sdf.format(ts)));
-                    } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                        item.put(entry.getKey(), rs.getDate(entry.getKey()));
-                    } else {
-                        item.put(entry.getKey(), rs.getString(entry.getKey()));
-                    }
-                }
-                list.add(item);
-            }
-            return new DataList(list);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
-        } finally {
-            this.releaseResultSet(rs);
-            this.releasePreparedStatement(ps);
-            this.releaseConnection(conn);
         }
     }
 

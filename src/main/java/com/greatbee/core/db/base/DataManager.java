@@ -177,7 +177,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Field pkField) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException, DBException {
                 return buildingDeleteQuery(oi, pkField, conn, ps);
             }
         });
@@ -187,7 +187,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Condition condition) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException, DBException {
                 return buildingDeleteQuery(oi, condition, conn, ps);
             }
         });
@@ -264,11 +264,11 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     public abstract void buildingDataObject(ResultSet rs, List<Field> fields, Data data) throws SQLException;
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
     public abstract String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException;
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
     public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws DBException, SQLException;
 

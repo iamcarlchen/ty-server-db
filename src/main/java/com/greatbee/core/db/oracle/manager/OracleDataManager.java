@@ -13,6 +13,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.db.base.BaseTYJDBCTemplate;
 import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.*;
 import com.greatbee.core.manager.DSManager;
@@ -35,7 +36,7 @@ import java.util.*;
  * Author: CarlChen
  * Date: 2017/11/18
  */
-public class OracleDataManager implements RelationalDataManager, ExceptionCode {
+public class OracleDataManager extends BaseTYJDBCTemplate implements RelationalDataManager {
     private static Logger logger = Logger.getLogger(OracleDataManager.class);
     /**
      * dsManager 直接链接nvwa配置库,主要用于获取connection
@@ -892,50 +893,6 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
 
             return result;
         }
-    }
-
-
-    private static void _checkFieldLengthOverLimit(Field field) throws DBException {
-        if (!DT.Time.getType().equals(field.getDt()) && !DT.Date.getType().equals(field.getDt()) && !DT.Double.getType().equals(field.getDt()) && !DT.INT.getType().equals(field.getDt()) && (!DT.Boolean.getType().equals(field.getDt()) || field.getFieldValue() != null && !field.getFieldValue().equals("false") && !field.getFieldValue().equals("true"))) {
-            if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength().intValue() > 0 && field.getFieldValue().length() > field.getFieldLength().intValue()) {
-                throw new DBException("字段值长度超过字段限制长度", ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
-            }
-        }
-    }
-
-    private static int _setPsParam(int index, PreparedStatement ps, List<Field> fields) throws SQLException {
-        for (int i = 0; i < fields.size(); ++i) {
-            Field f = (Field) fields.get(i);
-            if (DT.INT.getType().equals(f.getDt())) {
-                ps.setInt(i + index, DataUtil.getInt(f.getFieldValue(), 0));
-            } else if (DT.Boolean.getType().equals(f.getDt())) {
-                ps.setBoolean(i + index, DataUtil.getBoolean(f.getFieldValue(), false));
-            } else if (DT.Double.getType().equals(f.getDt())) {
-                ps.setDouble(i + index, DataUtil.getDouble(f.getFieldValue(), 0.0D));
-            } else if (DT.Date.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, 91);
-                } else {
-                    ps.setString(i + index, f.getFieldValue());
-                }
-            } else if (DT.Time.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, 92);
-                } else {
-                    ps.setString(i + index, f.getFieldValue());
-                }
-            } else {
-                ps.setString(i + index, f.getFieldValue());
-            }
-        }
-
-        return index + fields.size();
-    }
-
-    private static void _setPsParamPk(int index, PreparedStatement ps, Field field) throws SQLException {
-        ArrayList fields = new ArrayList();
-        fields.add(field);
-        _setPsParam(index, ps, fields);
     }
 
     private static String _transferMysqlTypeToTySqlType(int type, int colSize) {
