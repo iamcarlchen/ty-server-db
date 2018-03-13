@@ -217,8 +217,9 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseRs(rs);
-                _releaseConn(conn, ps);
+                this.releaseResultSet(rs);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
 
             return result;

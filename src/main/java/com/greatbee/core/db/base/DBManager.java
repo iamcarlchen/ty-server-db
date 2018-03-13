@@ -29,7 +29,7 @@ import java.util.*;
  * Author: xuechao.zhang
  * Date: 2017/11/18
  */
-public abstract class DBManager implements ExceptionCode {
+public abstract class DBManager extends BaseTYJDBCTemplate implements ExceptionCode {
 
     private static Logger logger = Logger.getLogger(DBManager.class);
 
@@ -67,9 +67,9 @@ public abstract class DBManager implements ExceptionCode {
                 exception.printStackTrace();
                 throw new DBException(exception.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseRs(rs);
-                _releaseConn(conn, ps);
-
+                this.releaseResultSet(rs);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
         }
     }
@@ -108,9 +108,9 @@ public abstract class DBManager implements ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseRs(rs);
-                _releaseConn(conn, ps);
-
+                this.releaseResultSet(rs);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
 
             return result;
@@ -140,14 +140,7 @@ public abstract class DBManager implements ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
-                    }
-                }
+                this.releaseConnection(conn);
             }
         }
     }
@@ -172,8 +165,9 @@ public abstract class DBManager implements ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseRs(rs);
-                _releaseConn(conn, ps);
+                this.releaseResultSet(rs);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
 
             return result;
@@ -196,88 +190,12 @@ public abstract class DBManager implements ExceptionCode {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseConn(conn, ps);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
         }
     }
 
-    protected void _releaseConn(Connection conn, PreparedStatement ps) throws DBException {
-        if (ps != null) {
-            try {
-                ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
-            }
-        }
-
-        this._releaseConn(conn);
-    }
-
-    protected void _releaseConn(Connection conn) throws DBException {
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
-            }
-        }
-    }
-
-    protected void _releaseRs(ResultSet rs) throws DBException {
-        if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new DBException("关闭ResultSet错误", ERROR_DB_RS_CLOSE_ERROR);
-            }
-        }
-    }
-
-    protected static void _checkFieldLengthOverLimit(Field field) throws DBException {
-        if (!DT.Time.getType().equals(field.getDt()) && !DT.Date.getType().equals(field.getDt()) && !DT.Double.getType().equals(field.getDt()) && !DT.INT.getType().equals(field.getDt()) && (!DT.Boolean.getType().equals(field.getDt()) || field.getFieldValue() != null && !field.getFieldValue().equals("false") && !field.getFieldValue().equals("true"))) {
-            if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength().intValue() > 0 && field.getFieldValue().length() > field.getFieldLength().intValue()) {
-                throw new DBException("字段值长度超过字段限制长度", ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
-            }
-        }
-    }
-
-    protected static int _setPsParam(int index, PreparedStatement ps, List<Field> fields) throws SQLException {
-        for (int i = 0; i < fields.size(); ++i) {
-            Field f = (Field) fields.get(i);
-            if (DT.INT.getType().equals(f.getDt())) {
-                ps.setInt(i + index, DataUtil.getInt(f.getFieldValue(), 0));
-            } else if (DT.Boolean.getType().equals(f.getDt())) {
-                ps.setBoolean(i + index, DataUtil.getBoolean(f.getFieldValue(), false));
-            } else if (DT.Double.getType().equals(f.getDt())) {
-                ps.setDouble(i + index, DataUtil.getDouble(f.getFieldValue(), 0.0D));
-            } else if (DT.Date.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, 91);
-                } else {
-                    ps.setString(i + index, f.getFieldValue());
-                }
-            } else if (DT.Time.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, 92);
-                } else {
-                    ps.setString(i + index, f.getFieldValue());
-                }
-            } else {
-                ps.setString(i + index, f.getFieldValue());
-            }
-        }
-
-        return index + fields.size();
-    }
-
-    protected static void _setPsParamPk(int index, PreparedStatement ps, Field field) throws SQLException {
-        ArrayList fields = new ArrayList();
-        fields.add(field);
-        _setPsParam(index, ps, fields);
-    }
 
     protected static String _transferMysqlTypeToTySqlType(int type, int colSize) {
         return type != 4 && (type != -6 || colSize <= 4) && type != -7 && type != -5 ? (type != 8 && type != 3 ? (type == 16 || type == -6 && colSize <= 4 ? DT.Boolean.getType() : (type != 12 && type != -1 && type != -9 && type != -16 && type != 2005 && type != 1 ? (type == 91 ? DT.Date.getType() : (type != 92 && type != 93 ? (type == 2000 ? DT.Object.getType() : (type == 2003 ? DT.Array.getType() : "")) : DT.Time.getType())) : DT.String.getType())) : DT.Double.getType()) : DT.INT.getType();

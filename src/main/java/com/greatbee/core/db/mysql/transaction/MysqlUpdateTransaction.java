@@ -18,19 +18,16 @@ import java.util.List;
 public class MysqlUpdateTransaction extends BaseTransactionTemplate {
     private static Logger logger = Logger.getLogger(MysqlUpdateTransaction.class);
 
-    private OI oi;
     private List<Field> fields;
-    private Field pkField;
+
     private Condition condition;
     private StringBuilder sql;
     private boolean isUpdateByPK = false;
 
     public MysqlUpdateTransaction(OI oi, List<Field> fields, Field pkField) throws DBException {
         this.setDbtt(DBTT.Update);
-        this.oi = oi;
-        this.pkField = pkField;
         this.fields = fields;
-        StringBuilder sql = new StringBuilder("UPDATE ");
+        sql = new StringBuilder("UPDATE ");
         sql.append("`").append(oi.getResource()).append("` ");
         sql.append(" SET ");
         for (int i = 0; i < fields.size(); i++) {
@@ -43,18 +40,16 @@ public class MysqlUpdateTransaction extends BaseTransactionTemplate {
         }
         sql.append(" WHERE `").append(pkField.getFieldName()).append("`=").append(pkField.getFieldValue());
 
-
         logger.info("组装更新对象SQL：" + sql.toString());
         isUpdateByPK = true;
     }
 
     public MysqlUpdateTransaction(OI oi, List<Field> fields, Condition condition) throws DBException {
         this.setDbtt(DBTT.Update);
-        this.oi = oi;
         this.fields = fields;
         this.condition = condition;
 
-        StringBuilder sql = new StringBuilder("UPDATE ");
+        sql = new StringBuilder("UPDATE ");
         sql.append("`").append(oi.getResource()).append("` ");
         sql.append(" SET ");
         for (int i = 0; i < fields.size(); i++) {

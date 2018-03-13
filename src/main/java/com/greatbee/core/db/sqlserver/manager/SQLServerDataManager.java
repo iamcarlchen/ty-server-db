@@ -111,7 +111,7 @@ public class SQLServerDataManager extends DataManager {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
         } finally {
-            this._releaseConn(conn);
+            this.releaseConnection(conn);
         }
 
         return tableName1;

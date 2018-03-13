@@ -5,11 +5,10 @@ import com.greatbee.core.bean.constant.DBTT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
-import com.greatbee.core.db.mysql.manager.MysqlDataManager;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
@@ -19,12 +18,10 @@ import java.util.List;
 public class MysqlCreateTransaction extends BaseTransactionTemplate {
     private static Logger logger = Logger.getLogger(MysqlCreateTransaction.class);
 
-    private OI oi;
     private List<Field> fields;
     private StringBuilder sql;
 
     public MysqlCreateTransaction(OI oi, List<Field> fields) throws DBException {
-        this.oi = oi;
         this.fields = fields;
         this.setDbtt(DBTT.Create);
 
@@ -49,7 +46,7 @@ public class MysqlCreateTransaction extends BaseTransactionTemplate {
 
 
     @Override
-    public void executeTransaction(Connection conn) throws Exception {
+    public void executeTransaction(Connection conn) throws SQLException {
         logger.info("执行创建对象SQL：" + sql.toString());
         ps = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);//返回主键
         _setPsParam(1, ps, fields);
