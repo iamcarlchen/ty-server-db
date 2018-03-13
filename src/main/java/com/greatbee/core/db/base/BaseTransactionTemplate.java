@@ -1,4 +1,4 @@
-package com.greatbee.core.bean.transaction;
+package com.greatbee.core.db.base;
 
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.DataUtil;

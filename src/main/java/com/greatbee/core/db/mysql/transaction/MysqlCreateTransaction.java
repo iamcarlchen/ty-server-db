@@ -4,7 +4,7 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.core.bean.constant.DBTT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;

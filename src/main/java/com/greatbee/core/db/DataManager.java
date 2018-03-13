@@ -7,7 +7,7 @@ import com.greatbee.base.bean.DataPage;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.Condition;
 
 import java.util.List;

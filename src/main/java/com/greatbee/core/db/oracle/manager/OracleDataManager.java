@@ -13,7 +13,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.*;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.db.RelationalDataManager;

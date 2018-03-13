@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,14 +20,12 @@ import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
 import com.greatbee.base.bean.DataPage;
 import com.greatbee.base.util.CollectionUtil;
-import com.greatbee.base.util.DataUtil;
-import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
@@ -42,13 +39,11 @@ import com.greatbee.core.db.mysql.transaction.MysqlDeleteTransaction;
 import com.greatbee.core.db.mysql.transaction.MysqlUpdateTransaction;
 import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
 
-import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.BuildUtils;
 import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.util.OIUtils;
 
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Mysql Data Manager
@@ -241,30 +236,9 @@ public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDa
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
 
     }
@@ -505,6 +479,7 @@ public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDa
                  */
                 node.execute(conn);
             }
+            conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
             try {
