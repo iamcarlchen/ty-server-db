@@ -56,44 +56,6 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
     private static Logger logger = Logger.getLogger(MysqlDataManager.class);
 
     @Override
-    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
-        if (CollectionUtil.isInvalid(transactionNodes)) {
-            //没有需要执行的事务组件
-            throw new DBException("没有需要执行的事务组件", ERROR_DB_DS_NOT_FOUND);
-        }
-        Connection conn = null;
-        try {
-            conn = this.getConnection(ds.getAlias());
-            /**
-             * 禁止自动提交
-             */
-            conn.setAutoCommit(false);
-            for (BaseTransactionTemplate node : transactionNodes) {
-                /**
-                 * 执行事务节点
-                 */
-                node.execute(conn);
-            }
-            conn.commit();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            try {
-                /**
-                 * 回滚内容
-                 */
-                conn.rollback();
-            } catch (SQLException e1) {
-                e1.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            this.releaseConnection(conn);
-        }
-    }
-
-
-    @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
         Connection conn = null;
         DSView dsView = new DSView();
@@ -475,17 +437,6 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                 this.releasePreparedStatement(ps);
                 this.releaseConnection(conn);
             }
-        }
-    }
-
-    @Override
-    public Data read(ConnectorTree connectorTree) throws DBException {
-        DataList dl = this.list(connectorTree);
-        List<Data> datas = dl.getList();
-        if (CollectionUtil.isValid(datas)) {
-            return datas.get(0);
-        } else {
-            return new Data();
         }
     }
 

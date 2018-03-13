@@ -241,6 +241,43 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     }
 
     @Override
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
+        if (CollectionUtil.isInvalid(transactionNodes)) {
+            //没有需要执行的事务组件
+            throw new DBException("没有需要执行的事务组件", ERROR_DB_DS_NOT_FOUND);
+        }
+        Connection conn = null;
+        try {
+            conn = this.getConnection(ds.getAlias());
+            /**
+             * 禁止自动提交
+             */
+            conn.setAutoCommit(false);
+            for (BaseTransactionTemplate node : transactionNodes) {
+                /**
+                 * 执行事务节点
+                 */
+                node.execute(conn);
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                /**
+                 * 回滚内容
+                 */
+                conn.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            this.releaseConnection(conn);
+        }
+    }
+
+    @Override
     public abstract DSView exportFromPhysicsDS(DS ds) throws DBException;
 
     @Override
