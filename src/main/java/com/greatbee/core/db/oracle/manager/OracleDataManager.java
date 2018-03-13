@@ -13,6 +13,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.*;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.db.RelationalDataManager;
@@ -812,6 +813,11 @@ public class OracleDataManager implements RelationalDataManager, ExceptionCode {
                 _releaseConn(conn, ps);
             }
         }
+    }
+
+    @Override
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
+
     }
 
 

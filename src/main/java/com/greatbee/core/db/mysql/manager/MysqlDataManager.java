@@ -28,6 +28,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.transaction.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
@@ -36,6 +37,9 @@ import com.greatbee.core.bean.view.DiffItem;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.SchemaDataManager;
+import com.greatbee.core.db.base.BaseTYJDBCTemplate;
+import com.greatbee.core.db.mysql.transaction.MysqlDeleteTransaction;
+import com.greatbee.core.db.mysql.transaction.MysqlUpdateTransaction;
 import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
 
 import com.greatbee.core.manager.DSManager;
@@ -51,15 +55,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  * <p>
  * Created by CarlChen on 2016/12/19.
  */
-public class MysqlDataManager implements RelationalDataManager, SchemaDataManager, ExceptionCode {
+public class MysqlDataManager extends BaseTYJDBCTemplate implements RelationalDataManager, SchemaDataManager, ExceptionCode {
 
     private static Logger logger = Logger.getLogger(MysqlDataManager.class);
-
-    /**
-     * dsManager 直接链接nvwa配置库,主要用于获取connection
-     */
-    @Autowired
-    private DSManager dsManager;
 
     public Data read(OI oi, List<Field> fields, Field pkField) throws DBException {
 
@@ -118,14 +116,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseConnection(conn);
         }
     }
 
@@ -169,30 +160,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
         return result;
     }
@@ -359,30 +329,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -395,38 +344,14 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         Connection conn = null;
         PreparedStatement ps = null;
         try {
-            conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("DELETE FROM ");
-            sql.append("`").append(oi.getResource()).append("` ");
-            // SQL Value用?处理
-            sql.append(" WHERE `").append(pkField.getFieldName()).append("`=? ");
-
-            logger.info("删除对象SQL：" + sql.toString());
-
-            ps = conn.prepareStatement(sql.toString());
-            _setPsParamPk(1, ps, pkField);
-            ps.executeUpdate();
+            BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, pkField);
+            transaction.execute(conn);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -439,39 +364,15 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         PreparedStatement ps = null;
         try {
             conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("DELETE FROM ");
-            sql.append("`").append(oi.getResource()).append("` ");
-            if (condition != null) {
-                sql.append(" WHERE ");
-                Condition.buildConditionSql(sql, condition);
-            }
-
-            logger.info("查询对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int index = Condition.buildConditionSqlPs(1, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
-            ps.executeUpdate();
+            BaseTransactionTemplate transaction = new MysqlDeleteTransaction(oi, condition);
+            transaction.execute(conn);
 
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -527,30 +428,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -568,48 +448,15 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
         }
         Connection conn = null;
-        PreparedStatement ps = null;
         try {
             conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("UPDATE ");
-            sql.append("`").append(oi.getResource()).append("` ");
-            sql.append(" SET ");
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(",");
-                }
-                sql.append("`").append(field.getFieldName()).append("`=? ");
-                _checkFieldLengthOverLimit(field);
-            }
-            sql.append(" WHERE `").append(pkField.getFieldName()).append("`=").append(pkField.getFieldValue());
-
-            logger.info("更新对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            _setPsParam(1, ps, fields);
-            ps.executeUpdate();
-
+            BaseTransactionTemplate transaction = new MysqlUpdateTransaction(oi, fields, pkField);
+            transaction.execute(conn);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseConnection(conn);
         }
     }
 
@@ -622,118 +469,61 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
         PreparedStatement ps = null;
         try {
             conn = _ds.getConnection();
-
-            StringBuilder sql = new StringBuilder("UPDATE ");
-            sql.append("`").append(oi.getResource()).append("` ");
-            sql.append(" SET ");
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (i > 0) {
-                    sql.append(",");
-                }
-                sql.append("`").append(field.getFieldName()).append("`=? ");
-                _checkFieldLengthOverLimit(field);
-            }
-            if (condition != null) {
-                sql.append(" WHERE ");
-                Condition.buildConditionSql(sql, condition);
-            }
-
-            logger.info("更新对象SQL：" + sql.toString());
-            ps = conn.prepareStatement(sql.toString());//返回主键
-            int _index = _setPsParam(1, ps, fields);
-            Condition.buildConditionSqlPs(_index, ps, condition);//前面没有？参数，所以从1开始,条件后面也可以再添加参数，索引从index开始
-            ps.executeUpdate();
-
+            BaseTransactionTemplate transactionTemplate = new MysqlUpdateTransaction(oi, fields, condition);
+            transactionTemplate.execute(conn);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
-    /**
-     * 校验字段值是否超过字段长度限制
-     *
-     * @param field
-     * @throws DBException
-     */
-    private static void _checkFieldLengthOverLimit(Field field) throws DBException {
-        if ((DT.INT.getType().equals(field.getDt())
-                || (DT.Boolean.getType().equals(field.getDt())) && (field.getFieldValue() == null
-                        || field.getFieldValue().equals("false") || field.getFieldValue().equals("true")))) {
-            //boolean类型直接过滤掉
-            return;
+    @Override
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
+        if (ds == null) {
+            //ds没有传入
+            throw new DBException("ds没有传入", ERROR_DB_DS_NOT_FOUND);
+        } else if (CollectionUtil.isInvalid(transactionNodes)) {
+            //没有需要执行的事务组件
+            throw new DBException("没有需要执行的事务组件", ERROR_DB_DS_NOT_FOUND);
         }
-        if (StringUtil.isValid(field.getFieldValue()) && field.getFieldLength() > 0
-                && (field.getFieldValue().length() > field.getFieldLength())) {
-            throw new DBException("字段值长度超过字段限制长度", ExceptionCode.ERROR_DB_FIELD_LENGTH_OVER_LIMIT);
+        DataSource _ds = DataSourceUtils.getDatasource(ds.getAlias(), dsManager);
+        if (_ds == null) {
+            throw new DBException("获取数据源失败", ExceptionCode.ERROR_DB_DS_NOT_FOUND);
         }
-    }
-
-    /**
-     * 设置ps参数 多个条件   防注入
-     *
-     * @param index  默认从1开始
-     * @param ps
-     * @param fields
-     * @throws SQLException
-     */
-    private static int _setPsParam(int index, PreparedStatement ps, List<Field> fields) throws SQLException {
-        for (int i = 0; i < fields.size(); i++) {
-            Field f = fields.get(i);
-            if (DT.INT.getType().equals(f.getDt())) {
-                ps.setInt(i + index, DataUtil.getInt(f.getFieldValue(), 0));
-            } else if (DT.Boolean.getType().equals(f.getDt())) {
-                ps.setBoolean(i + index, DataUtil.getBoolean(f.getFieldValue(), false));
-            } else if (DT.Double.getType().equals(f.getDt())) {
-                ps.setDouble(i + index, DataUtil.getDouble(f.getFieldValue(), 0));
-            } else if (DT.Date.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, Types.DATE);
-                } else
-                    ps.setString(i + index, f.getFieldValue());
-            } else if (DT.Time.getType().equals(f.getDt())) {
-                if (StringUtil.isInvalid(f.getFieldValue())) {
-                    ps.setNull(i + index, Types.TIME);
-                } else
-                    ps.setString(i + index, f.getFieldValue());
-            } else {
-                ps.setString(i + index, f.getFieldValue());
+        Connection conn = null;
+        try {
+            /**
+             * 禁止自动提交
+             */
+            conn.setAutoCommit(false);
+            for (BaseTransactionTemplate node : transactionNodes) {
+                /**
+                 * 执行事务节点
+                 */
+                node.execute(conn);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                /**
+                 * 回滚内容
+                 */
+                conn.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            this.releaseConnection(conn);
         }
-        return index + fields.size();
+
+
     }
 
-    /**
-     * ps设置单个条件
-     *
-     * @param index
-     * @param ps
-     * @param field
-     * @throws SQLException
-     */
-    private static void _setPsParamPk(int index, PreparedStatement ps, Field field) throws SQLException {
-        List<Field> fields = new ArrayList<Field>();
-        fields.add(field);
-        _setPsParam(index, ps, fields);
-    }
 
     @Override
     public DSView exportFromPhysicsDS(DS ds) throws DBException {
@@ -743,7 +533,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             conn = DataSourceUtils.getDatasource(ds).getConnection();
             DatabaseMetaData metaData = conn.getMetaData();
 
-            ResultSet rs = metaData.getTables(null, null, "", new String[] { "TABLE" });
+            ResultSet rs = metaData.getTables(null, null, "", new String[]{"TABLE"});
             dsView.setDs(ds);
             List<OIView> oiViews = new ArrayList<OIView>();
             while (rs.next()) {
@@ -801,14 +591,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseConnection(conn);
         }
     }
 
@@ -823,18 +606,20 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             DS ds = dsView.getDs();
 
             Connection conn = null;
-            Statement ps = null;
+            PreparedStatement ps = null;
             try {
                 conn = DataSourceUtils.getDatasource(ds).getConnection();
-                ps = conn.createStatement();
+
                 for (OIView oiView : dsView.getOiViews()) {
                     List<Field> fields = oiView.getFields();
                     String tableName = oiView.getOi().getResource();
                     String sql = MysqlSchemaUtil._buildCreateTableSql(ds, tableName, fields);
                     System.out.println("create table sql=" + sql);
-                    ps.addBatch(sql);
+                    ps = conn.prepareStatement(sql);
+                    ps.executeUpdate();
+                    this.releasePreparedStatement(ps);
                 }
-                ps.executeBatch();//批量执行
+//                ps.executeBatch();//批量执行
             } catch (SQLException e) {
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
@@ -842,22 +627,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), e.getCode());
             } finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                    }
-                }
-                if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                    }
-                }
+                this.releaseConnection(conn);
             }
         }
     }
@@ -902,14 +672,7 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
                         throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
                     }
                 }
-                if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                    }
-                }
+                this.releaseConnection(conn);
             }
         }
     }
@@ -973,30 +736,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
         return result;
     }
@@ -1072,30 +814,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -1160,30 +881,9 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
             e.printStackTrace();
             throw new DBException(e.getMessage(), ExceptionCode.ERROR_DB_SQL_EXCEPTION);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭ResultSet错误", ExceptionCode.ERROR_DB_RS_CLOSE_ERROR);
-                }
-            }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭PreparedStatement错误", ExceptionCode.ERROR_DB_PS_CLOSE_ERROR);
-                }
-            }
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new DBException("关闭connection错误", ExceptionCode.ERROR_DB_CONN_CLOSE_ERROR);
-                }
-            }
+            this.releaseResultSet(rs);
+            this.releasePreparedStatement(ps);
+            this.releaseConnection(conn);
         }
     }
 
@@ -1376,8 +1076,8 @@ public class MysqlDataManager implements RelationalDataManager, SchemaDataManage
     }
 
     /**
-     *  删除字段
-     *  done!
+     * 删除字段
+     * done!
      */
     @Override
     public void dropField(OI oi, Field field) throws DBException {
