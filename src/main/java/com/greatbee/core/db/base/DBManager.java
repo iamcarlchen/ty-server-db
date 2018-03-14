@@ -158,7 +158,9 @@ public abstract class DBManager extends BaseTYJDBCTemplate implements ExceptionC
         try {
             conn = this.getConnection(dataSourceAlias);
             ps = handler.execute(conn, ps);
-            ps.executeUpdate();
+            if (ps != null) {
+                ps.executeUpdate();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
