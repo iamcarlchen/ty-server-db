@@ -8,13 +8,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
+import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
@@ -318,25 +316,28 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
 
     @Override
     public void buildingDataObject(ResultSet rs, List<Field> fields, Data data) throws SQLException {
-        while (rs.next()) {
-            Data map = new Data();
-            for (Field _f : fields) {
-                String _dt = _f.getDt();
-                if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
-                    map.put(_f.getFieldName(), rs.getBoolean(_f.getFieldName()));
-                } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
-                    map.put(_f.getFieldName(), rs.getDouble(_f.getFieldName()));
-                } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
-                    map.put(_f.getFieldName(), rs.getInt(_f.getFieldName()));
-                } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    Timestamp ts = rs.getTimestamp(_f.getFieldName());
-                    map.put(_f.getFieldName(), ts == null ? "" : (sdf.format(ts)));
-                } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
-                    map.put(_f.getFieldName(), rs.getDate(_f.getFieldName()));
-                } else {
-                    map.put(_f.getFieldName(), rs.getString(_f.getFieldName()));
-                }
+        Iterator iterator = fields.iterator();
+        while (true) {
+            Field field = (Field) iterator.next();
+            String _dt = field.getDt();
+            if (DT.Boolean.getType().equalsIgnoreCase(_dt)) {
+                data.put(field.getFieldName(), rs.getBoolean(field.getFieldName()));
+            } else if (DT.Double.getType().equalsIgnoreCase(_dt)) {
+                data.put(field.getFieldName(), rs.getDouble(field.getFieldName()));
+            } else if (DT.INT.getType().equalsIgnoreCase(_dt)) {
+                data.put(field.getFieldName(), rs.getInt(field.getFieldName()));
+            } else if (DT.Time.getType().equalsIgnoreCase(_dt)) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Timestamp ts = rs.getTimestamp(field.getFieldName());
+                data.put(field.getFieldName(), ts == null ? "" : (sdf.format(ts)));
+            } else if (DT.Date.getType().equalsIgnoreCase(_dt)) {
+                data.put(field.getFieldName(), rs.getDate(field.getFieldName()));
+            } else {
+                data.put(field.getFieldName(), rs.getString(field.getFieldName()));
+            }
+            logger.info("buildingDataObject->" + JSONObject.toJSONString(data));
+            if (!iterator.hasNext()) {
+                break;
             }
         }
 
