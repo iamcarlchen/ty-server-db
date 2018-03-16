@@ -13,7 +13,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.sun.javafx.tools.resource.DeployResource.Type.data;
 
 /**
  * Created by usagizhang on 18/3/14.

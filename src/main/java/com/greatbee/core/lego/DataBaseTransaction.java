@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
+import com.greatbee.core.bean.constant.DST;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
@@ -37,17 +38,6 @@ public class DataBaseTransaction implements Lego, ExceptionCode {
     @Autowired
     private DSManager dsManager;
 
-    public static void main(String[] arg) {
-        String a = "123123123";
-        OI oi = new OI();
-        Object objA = a;
-        Object objOI = oi;
-        System.out.println(a.getClass().getName());
-        System.out.println(oi.getClass().getName());
-        System.out.println(objA.getClass().getName());
-        System.out.println(objOI.getClass().getName());
-
-    }
 
     @Override
     public void execute(Input input, Output output) throws LegoException {
@@ -55,7 +45,7 @@ public class DataBaseTransaction implements Lego, ExceptionCode {
         InputField dsAlias = input.getInputField("ds");
         InputField transactions = input.getInputField("dataList");
 
-        boolean dataListIsJson = transactions.getFieldValue().getClass().getName().equalsIgnoreCase("String");
+        boolean dataListIsJson = transactions.getFieldValue().getClass().getName().equalsIgnoreCase("java.lang.String");
 
         try {
             //组装transaction队列
@@ -105,13 +95,9 @@ public class DataBaseTransaction implements Lego, ExceptionCode {
                             list.add(updateNode);
                         } else if (StringUtil.isValid(type) && type.equalsIgnoreCase("delete")) {
                             //delete
-                            if (!transactionNodeJSON.containsKey("fields")) {
-                                //没有field字段
-                                throw new LegoException("fields缺失", ERROR_LEGO_TRANSACTION_EXECUTE_ERROR);
-                            }
                             if (!transactionNodeJSON.containsKey("conditions")) {
                                 //没有field字段
-                                throw new LegoException("fields缺失", ERROR_LEGO_TRANSACTION_EXECUTE_ERROR);
+                                throw new LegoException("conditions缺失", ERROR_LEGO_TRANSACTION_EXECUTE_ERROR);
                             }
                             JSONObject conditionJSON = transactionNodeJSON.getJSONObject("conditions");
                             Condition condition = conditionJSON.toJavaObject(Condition.class);
@@ -131,7 +117,9 @@ public class DataBaseTransaction implements Lego, ExceptionCode {
             if (ds == null) {
                 throw new LegoException("没有可执行的ds对象", ERROR_LEGO_TRANSACTION_EXECUTE_ERROR);
             }
-            mysqlDataManager.executeTransaction(ds, list);
+            if (ds.getDst().equalsIgnoreCase(DST.Mysql.getType())) {
+                mysqlDataManager.executeTransaction(ds, list);
+            }
         } catch (DBException e) {
             e.printStackTrace();
             throw new LegoException(e.getMessage(), ERROR_LEGO_TRANSACTION_EXECUTE_ERROR);
