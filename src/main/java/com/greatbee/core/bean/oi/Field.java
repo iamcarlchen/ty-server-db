@@ -28,6 +28,8 @@ public class Field extends SimpleIND implements IND {
     private String fieldValue;
     //字段长度
     private Integer fieldLength;
+    //群组，用于DS为rest_api的时候，group区分Header,Path,Post,Get等字段
+    private String group;
 
     public String getFieldValue() {
         return fieldValue;
@@ -91,5 +93,13 @@ public class Field extends SimpleIND implements IND {
 
     public void setFieldLength(Integer fieldLength) {
         this.fieldLength = fieldLength;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 }

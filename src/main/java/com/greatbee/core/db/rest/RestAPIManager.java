@@ -14,6 +14,9 @@ import java.util.List;
  */
 public class RestAPIManager implements UnstructuredDataManager {
 
+    //字段Groups
+    private static final String[] Field_Groups = new String[]{"Header", "Post", "Get", "Path"};
+
     @Override
     public String connect(OI oi, List<Field> fields) {
         //TODO
