@@ -1,574 +1,299 @@
 package com.greatbee.core.db.mysql;
 
-import com.alibaba.fastjson.JSON;
-import com.greatbee.TYBaseTest;
+import com.greatbee.DBBaseTest;
 import com.greatbee.base.bean.DBException;
-import com.greatbee.base.bean.Data;
-import com.greatbee.base.bean.DataList;
-import com.greatbee.base.bean.DataPage;
-import com.greatbee.base.util.DataUtil;
-import com.greatbee.core.bean.constant.*;
-import com.greatbee.core.bean.oi.Connector;
+import com.greatbee.core.ExceptionCode;
+import com.greatbee.core.bean.constant.DST;
+import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.bean.view.*;
-import com.greatbee.core.db.mysql.manager.MysqlDataManager;
+import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.manager.DSManager;
+import com.greatbee.core.util.DataSourceUtils;
 
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
- * Created by CarlChen on 2017/5/25.
+ * Created by usagizhang on 18/3/15.
  */
-public class MysqlDataManagerTest extends TYBaseTest {
-    private MysqlDataManager mysqlDataManager;
-    private DSManager dsManager;
+public class MysqlDataManagerTest extends DBBaseTest implements ExceptionCode {
 
-    private DSView dsView;
+    protected DSManager dsManager;
 
-    private OIView oiView1;
-    private OIView oiView2;
+    public Connection conn = null;
+    public PreparedStatement ps = null;
 
-    private ConnectorTree connectorTree;
-
-    private int id = 0;
+    protected String testConnectionUrl = "jdbc:mysql://localhost:3306/db_ty_test?useUnicode=true&characterEncoding=utf8";
+    protected String testConnectionUsername = "root";
+    protected String testConnectionPassword = "";
+    protected String dsName = "测试数据源";
+    protected String dsAlias = "test_mysql";
+    protected DST dst = DST.Mysql;
 
     public void setUp() {
-        super.setUp();
-
-        mysqlDataManager = (MysqlDataManager) context.getBean("mysqlDataManager");
+        super.setUp("test_server.xml");
+        // super.setUp("ty_db_server.xml");
+        //加载manager
         dsManager = (DSManager) context.getBean("dsManager");
+        try {
+            //初始化测试数据
+            this.initConn();
+            this.initTestSchema(conn, ps);
+            this.releaseConn();
+        } catch (DBException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-        DS ds = new DS();
-        ds.setAlias("test");
-        ds.setConnectionUrl("jdbc:mysql://localhost:3306/ty?useUnicode=true&characterEncoding=utf8&autoReconnect=true&user=root&password=&p");
-        ds.setConnectionUsername("root");
-        ds.setConnectionPassword("");
 
-        dsView = new DSView();
-        dsView.setDs(ds);
-        List<OIView> oiViews = new ArrayList<OIView>();
+    public DS getDS() {
+        DS _ds = new DS();
+        _ds.setName(dsName);
+        _ds.setAlias(dsAlias);
+        _ds.setDst(dst.getType());
+        _ds.setConnectionUrl(testConnectionUrl);
+        _ds.setConnectionUsername(testConnectionUsername);
+        _ds.setConnectionPassword(testConnectionPassword);
+        return _ds;
+    }
 
-        //T1 表   f1,f2,f3
-        oiView1 = new OIView();
+    public void initConn() throws DBException {
+        try {
+            //初始化数据库连接
+            this.conn = DataSourceUtils.getDatasource(this.getDS()).getConnection();
+            this.ps = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void releaseConn() throws DBException {
+        if (ps != null) {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new DBException("关闭PreparedStatement错误", ERROR_DB_PS_CLOSE_ERROR);
+            }
+        }
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new DBException("关闭connection错误", ERROR_DB_CONN_CLOSE_ERROR);
+            }
+        }
+    }
+
+    /**
+     * 初始化schema
+     */
+    public void initTestSchema(Connection conn, PreparedStatement ps) throws DBException, SQLException {
+        this.initTestTable(conn, ps);
+        this.initTestData(conn, ps);
+    }
+
+    /**
+     * 初始化测试表
+     */
+    public void initTestTable(Connection conn, PreparedStatement ps) throws DBException, SQLException {
+
+        //drop table
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_category`;");
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_article_detail`;");
+        this.executeQuery(conn, ps, "DROP TABLE IF EXISTS `ly_base_app`;");
+
+        StringBuilder queryBuilder = new StringBuilder();
+        //创建文章分类表
+        queryBuilder.append("CREATE TABLE `ly_article_category` (");
+        queryBuilder.append("`id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增长，无意义',");
+        queryBuilder.append("`categoryId` varchar(64) DEFAULT NULL COMMENT '分类ID，不能重复',");
+        queryBuilder.append("`parentId` varchar(64) DEFAULT NULL COMMENT '父级分类的categoryId，ROOT标示是一级分类。',");
+        queryBuilder.append("`name` varchar(32) DEFAULT NULL COMMENT '分类名称',");
+        queryBuilder.append("`remark` varchar(256) DEFAULT NULL COMMENT '备注',");
+        queryBuilder.append("`enable` tinyint(4) DEFAULT NULL COMMENT '1=启用，0=禁用',");
+        queryBuilder.append("`sortNum` int(11) DEFAULT NULL COMMENT '排序ID，越大的排越后面',");
+        queryBuilder.append("`createEmployeeCode` varchar(16) DEFAULT NULL COMMENT '创建人工号 ',");
+        queryBuilder.append("`createEmployeeName` varchar(32) DEFAULT NULL COMMENT '创建人姓名',");
+        queryBuilder.append("`createDatetime` datetime DEFAULT NULL COMMENT '创建时间',");
+        queryBuilder.append("`updateEmployeeCode` varchar(16) DEFAULT NULL COMMENT '更新人工号',");
+        queryBuilder.append("`updateEmployeeName` varchar(32) DEFAULT NULL COMMENT '更新人姓名   ',");
+        queryBuilder.append("`updateDatetime` datetime DEFAULT NULL,");
+        queryBuilder.append("`delete` tinyint(4) DEFAULT NULL COMMENT '0=未删除，1=已删除',");
+        queryBuilder.append("PRIMARY KEY (`id`)");
+        queryBuilder.append(") ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
+
+        this.executeQuery(conn, ps, queryBuilder.toString());
+
+        //创建文章表
+        queryBuilder = new StringBuilder();
+        queryBuilder.append("CREATE TABLE `ly_article_detail` (");
+        queryBuilder.append("`id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增长ID',");
+        queryBuilder.append("`categoryId` varchar(64) DEFAULT NULL COMMENT '分类ID，对应分类表的categoryId',");
+        queryBuilder.append("`title` varchar(128) DEFAULT NULL COMMENT '文章标题',");
+        queryBuilder.append("`summary` varchar(256) DEFAULT NULL COMMENT '摘要',");
+        queryBuilder.append("`content` longtext COMMENT '正文内容  ',");
+        queryBuilder.append("`cover` varchar(2048) DEFAULT NULL,");
+        queryBuilder.append("`likeCount` int(11) DEFAULT NULL COMMENT '点赞数',");
+        queryBuilder.append("`commentCount` int(11) DEFAULT NULL COMMENT '评论数',");
+        queryBuilder.append("`shareCount` int(11) DEFAULT NULL COMMENT '分享数',");
+        queryBuilder.append("`readCount` int(11) DEFAULT NULL COMMENT '阅读数',");
+        queryBuilder.append("`isSendPush` tinyint(4) DEFAULT NULL COMMENT '是否发送推送,0=不发送，1=发送',");
+        queryBuilder.append("`sendDatetime` datetime DEFAULT NULL COMMENT '发送推送的时间',");
+        queryBuilder.append("`remark` varchar(256) DEFAULT NULL COMMENT '备注',");
+        queryBuilder.append("`targetType` varchar(32) DEFAULT NULL COMMENT '发送目标类型，Department=组织架构，Employee=员工',");
+        queryBuilder.append("`targetCode` varchar(1024) DEFAULT NULL COMMENT '发送的目标Code（组织架构Code或员工Code）,逗号间隔',");
+        queryBuilder.append("`targetName` varchar(2048) DEFAULT NULL COMMENT '发送的目标名称（组织架构名称或员工姓名）,逗号间隔',");
+        queryBuilder.append("`enable` tinyint(4) DEFAULT NULL COMMENT '是否启用，1=启用，0=禁用',");
+        queryBuilder.append("`sortNum` int(11) DEFAULT NULL COMMENT '排序ID，越大的排越后面',");
+        queryBuilder.append("`createEmployeeCode` varchar(16) DEFAULT NULL COMMENT '创建人工号   ',");
+        queryBuilder.append("`createEmployeeName` varchar(32) DEFAULT NULL COMMENT '创建人姓名',");
+        queryBuilder.append("`updateEmployeeCode` varchar(16) DEFAULT NULL COMMENT '更新人工号',");
+        queryBuilder.append("`updateEmployeeName` varchar(32) DEFAULT NULL COMMENT '更新人姓名  ',");
+        queryBuilder.append("`updateDatetime` datetime DEFAULT NULL COMMENT '更新时间',");
+        queryBuilder.append("`publishFrom` varchar(128) DEFAULT NULL COMMENT '发布方',");
+        queryBuilder.append("`createDatetime` datetime DEFAULT NULL COMMENT '创建时间',");
+        queryBuilder.append("`pushStatus` tinyint(4) DEFAULT NULL COMMENT '推送状态，0=不推送，1=等待推送，2=正在推送，3=推送完毕，-1=推送失败',");
+        queryBuilder.append("`shareStatus` tinyint(4) DEFAULT NULL COMMENT '分享状态 0=关闭分享，1=开启分享\n',");
+        queryBuilder.append("`serialNumber` varchar(128) DEFAULT NULL COMMENT '序列号，随机生成',");
+        queryBuilder.append("PRIMARY KEY (`id`)");
+        queryBuilder.append(") ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
+        this.executeQuery(conn, ps, queryBuilder.toString());
+
+        queryBuilder = new StringBuilder();
+        queryBuilder.append("CREATE TABLE `ly_base_app` (");
+        queryBuilder.append("`appId` varchar(64) NOT NULL COMMENT '唯一不重复，自主填写',");
+        queryBuilder.append("`appSecretKey` varchar(256) DEFAULT NULL COMMENT '访问秘钥',");
+        queryBuilder.append("`appName` varchar(128) DEFAULT NULL COMMENT 'app名称',");
+        queryBuilder.append("`enable` tinyint(4) DEFAULT NULL COMMENT '0=关闭，1=启用',");
+        queryBuilder.append("`remark` varchar(256) DEFAULT NULL COMMENT '备注',");
+        queryBuilder.append("`contacts` varchar(128) DEFAULT NULL COMMENT '应用联系人',");
+        queryBuilder.append("`mainCharge` varchar(128) DEFAULT NULL COMMENT '应用负责人',");
+        queryBuilder.append("`contactsMobilePhone` varchar(128) DEFAULT NULL COMMENT '联系人电话',");
+        queryBuilder.append("`updateDate` datetime DEFAULT NULL COMMENT '更新时间',");
+        queryBuilder.append("`updateEmployeeCode` varchar(32) DEFAULT NULL COMMENT '更新员工code',");
+        queryBuilder.append("`updateEmployeeName` varchar(64) DEFAULT NULL COMMENT '更新员工姓名',");
+        queryBuilder.append("`deleteFlg` tinyint(2) DEFAULT NULL COMMENT '删除标识',");
+        queryBuilder.append("PRIMARY KEY (`appId`)");
+        queryBuilder.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        this.executeQuery(conn, ps, queryBuilder.toString());
+
+        System.out.println("schema done!");
+    }
+
+
+
+    /**
+     * 初始化测试数据
+     */
+    public void initTestData(Connection conn, PreparedStatement ps) throws DBException, SQLException {
+
+        //插入文章分类数据
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `remark`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01112', 'gonggao', '最新', 'null', '1', '1', '12345', '12345', '2017-01-01 00:00:00', '51029236', '龚子国', '2017-06-08 10:14:37', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01113', 'gonggao', '任命', '1', '2', '12345', '12345', '2017-01-01 00:00:00', '51032636', '董隽晶', '2017-04-25 15:00:27', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01114', 'gonggao', '纪要', '1', '3', '12345', '12345', '2017-01-01 00:00:00', '51032636', '董隽晶', '2017-04-25 14:49:23', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01115', 'gonggao', '奖惩', '1', '4', '12345', '12345', '2017-01-01 00:00:00', '51032636', 'null', '2017-04-24 16:29:09', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01116', 'gonggao', '通知', '1', '5', '12345', '12345', '2017-01-01 00:00:00', '51029458', '张学超', '2017-04-25 15:17:17', '0');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_category` ( `categoryId`, `parentId`, `name`, `remark`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `createDatetime`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `delete`) VALUES ( 'B9F01112', 'ROOT', '职工之家', 'null', '1', '1', '51029458', '张学超', '2017-04-27 20:48:24', '51031417', '戴金辉', '2017-04-28 16:52:50', '0');");
+
+        //插入文章数据
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '商户联盟“唱”出新声，吸金2亿六店“合”肥', '商户联合营销新物种——同城盛典', '', 'http://img2.mklimg.com/g1/M00/0E/09/rBBrBlkk8diAUxL2AADVkp69i6U351.jpg', '0', '0', '0', '1', '0', '2017-05-25 10:53:53', '', 'All', '', '', '1', '1', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-24 17:20:47', '', '2017-05-24 09:53:53', '0', 'CD3925553F0996965A5A1723CE423790');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `pushStatus`, `shareStatus`, `serialNumber`) VALUES ( '97C64AAA', '践行公益｜用爱心为生命加油！——集团总部员工撸起袖子无偿献血', '2017-05-24', '', 'http://img2.mklimg.com/g2/M00/0E/08/rBBrClkk6dKAaTI5AACBbQAU3_M577.jpg', '0', '0', '0', '2', '1', '2017-05-24 09:41:48', '', 'All', '', '', '1', '0', '51035039', '胡云江', '', '', '2017-05-24 10:04:17', '', '2017-05-24 10:04:17', '3', '0', '30E163A7B1A884E6B83184D969A432E8');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `pushStatus`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '设计师带客包场，4小时刷卡近3000万', '今晚吃火锅的', '', 'http://img1.mklimg.com/g2/M00/0E/10/rBBrClklOYuAG-p9AADYF56VFJI225.jpg', '0', '0', '0', '3', '1', '2017-05-25 17:14:00', '', 'All', '', '', '1', '0', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-25 17:08:59', '', '2017-05-24 10:52:39', '0', '0', '51CE02264CB8D85419BB018FA4DCD80C');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'BD70E74D', '融融端午情，红星家万兴，集团工会祝全体红星人节日快乐！', '2017-05-24', '', 'http://img2.mklimg.com/g2/M00/0E/0C/rBBrClklFyyAAdXtAABgdgAgde8955.jpg', '0', '0', '0', '0', '1', '2017-05-24 13:13:19', '', 'Department', '10000158', '集团总部-党工团-工会', '1', '0', '51035039', '胡云江', '51035039', '胡云江', '2017-05-24 16:34:12', '', '2017-05-24 13:17:08', '0', '529F4B2DC5F6E77BFC7E0BD378A676FB');");
+        this.executeQuery(conn, ps,
+                "INSERT INTO `ly_article_detail` ( `categoryId`, `title`, `summary`, `content`, `cover`, `likeCount`, `commentCount`, `shareCount`, `readCount`, `isSendPush`, `sendDatetime`, `remark`, `targetType`, `targetCode`, `targetName`, `enable`, `sortNum`, `createEmployeeCode`, `createEmployeeName`, `updateEmployeeCode`, `updateEmployeeName`, `updateDatetime`, `publishFrom`, `createDatetime`, `shareStatus`, `serialNumber`) VALUES ( 'B9F01112', '人人都在转H5，只有她转出了RMB', '一样的朋友圈，一样的导购员，一样的H5，为啥业绩不一样？', '', 'http://img1.mklimg.com/g2/M00/0E/13/rBBrCVklTimAebk6AACAql7_oQY322.jpg', '0', '0', '0', '0', '0', '2017-05-24 15:47:52', '', 'All', '', '', '1', '0', '51031417', '戴金辉', '51031417', '戴金辉', '2017-05-24 17:18:51', '', '2017-05-24 15:47:52', '0', 'F30577EF6769A9CF4E91D96B0AB222F5');");
+
+    }
+
+    public void executeQuery(Connection conn, PreparedStatement ps, String querySql) throws SQLException {
+        ps = conn.prepareStatement(querySql);
+        ps.execute();
+    }
+
+    /**
+     * 初始化OI
+     */
+    protected OI initOI(String name, String alias, String resource) {
         OI oi = new OI();
-        oi.setAlias("t1");
-        oi.setDsAlias(ds.getAlias());
-        oi.setResource("tb_t1");
-        oiView1.setOi(oi);
-        List<Field> fields = new ArrayList<Field>();
-        Field _f = new Field();
-        _f.setFieldName("f1");
-        _f.setFieldLength(11);
-        _f.setPk(true);
-        _f.setOiAlias(oi.getAlias());
-        _f.setDt(DT.INT.getType());
-        fields.add(_f);
-        Field _f2 = new Field();
-        _f2.setDt(DT.String.getType());
-        _f2.setOiAlias(oi.getAlias());
-        _f2.setFieldName("f2");
-        _f2.setFieldLength(255);
-        fields.add(_f2);
-        Field _f3 = new Field();
-        _f3.setDt(DT.INT.getType());
-        _f3.setOiAlias(oi.getAlias());
-        _f3.setFieldName("f3");
-        _f3.setFieldLength(11);
-        fields.add(_f3);
-        oiView1.setFields(fields);
-        oiViews.add(oiView1);
+        oi.setDsAlias(this.getDS().getAlias());
+        oi.setAlias(alias);
+        oi.setName(name);
+        oi.setResource(resource);
 
-        //T2 表   f4,f5,f6
-        oiView2 = new OIView();
-        OI oi2 = new OI();
-        oi2.setAlias("t2");
-        oi2.setDsAlias(ds.getAlias());
-        oi2.setResource("tb_t2");
-        oiView2.setOi(oi2);
-        List<Field> fields2 = new ArrayList<Field>();
-        Field _f4 = new Field();
-        _f4.setFieldName("f4");
-        _f4.setFieldLength(11);
-        _f4.setPk(true);
-        _f4.setOiAlias(oi.getAlias());
-        _f4.setDt(DT.INT.getType());
-        fields2.add(_f4);
-        Field _f5 = new Field();
-        _f5.setDt(DT.INT.getType());
-        _f5.setOiAlias(oi.getAlias());
-        _f5.setFieldName("f5");
-        _f5.setFieldLength(11);
-        fields2.add(_f5);
-        Field _f6 = new Field();
-        _f6.setDt(DT.String.getType());
-        _f6.setOiAlias(oi.getAlias());
-        _f6.setFieldName("f6");
-        _f6.setFieldLength(255);
-        fields2.add(_f6);
-        oiView2.setFields(fields2);
-        oiViews.add(oiView2);
-
-        dsView.setOiViews(oiViews);
-
-        try {
-            mysqlDataManager.importFromDS(dsView);
-        } catch (DBException e) {
-            e.printStackTrace();
-        }
-
-        //T1 表插入几条数据
-        List<Field> fs = oiView1.getFields();
-        for (int i = 1; i < 10; i++) {
-            for (Field ff : fs) {
-                if (!ff.isPk()) {
-                    ff.setFieldValue("" + new Random().nextInt(20));
-                }
-            }
-            try {
-                mysqlDataManager.create(oiView1.getOi(), fs);
-            } catch (DBException e) {
-                e.printStackTrace();
-            }
-        }
-
-        //T2表插入几条数据
-        List<Field> fs2 = oiView2.getFields();
-        for (int i = 1; i < 10; i++) {
-            for (Field ff : fs2) {
-                if (!ff.isPk()) {
-                    ff.setFieldValue("" + new Random().nextInt(20));
-                }
-            }
-            try {
-                mysqlDataManager.create(oiView2.getOi(), fs2);
-            } catch (DBException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-        // -------- build connectorTree  start ---------
-        //构造connectorTree
-        connectorTree = new ConnectorTree();
-
-        Map<String, Field> t1Map = new HashMap<String, Field>();
-        connectorTree.setOi(oiView1.getOi());
-        t1Map.put(oiView1.getFields().get(1).getFieldName() + "_001", oiView1.getFields().get(1));
-        connectorTree.setFields(t1Map);
-        List<ConnectorTree> rootChild = new ArrayList<ConnectorTree>();
-        connectorTree.setChildren(rootChild);
-
-        ConnectorTree c1 = new ConnectorTree();
-        c1.setOi(oiView2.getOi());
-        Map<String, Field> t2Map = new HashMap<String, Field>();
-        t2Map.put(oiView2.getFields().get(2).getFieldName() + "_002", oiView2.getFields().get(2));
-        c1.setFields(t2Map);
-        Connector conn = new Connector();
-        conn.setAlias("c1");
-        conn.setFromFieldName(_f.getFieldName());
-        conn.setToFieldName(_f5.getFieldName());
-        c1.setConnector(conn);
-
-        List<ConnectorTree> c1Child = new ArrayList<ConnectorTree>();
-        c1.setChildren(c1Child);
-        rootChild.add(c1);
-
-        ConnectorTree c2 = new ConnectorTree();
-        c2.setConT(ConT.Right);
-        c2.setOi(oiView2.getOi());
-        Map<String, Field> t2Map2 = new HashMap<String, Field>();
-        t2Map2.put(oiView2.getFields().get(0).getFieldName() + "_003", oiView2.getFields().get(0));
-        c2.setFields(t2Map2);
-        Connector conn2 = new Connector();
-        conn2.setAlias("c2");
-        conn2.setFromFieldName(_f2.getFieldName());
-        conn2.setToFieldName(_f6.getFieldName());
-        c2.setConnector(conn2);
-
-        rootChild.add(c2);
-
-        ConnectorTree c3 = new ConnectorTree();
-        c3.setOi(oiView1.getOi());
-        Map<String, Field> t1Map2 = new HashMap<String, Field>();
-        t1Map2.put(oiView1.getFields().get(2).getFieldName() + "_004", oiView1.getFields().get(2));
-        c3.setFields(t1Map2);
-        Connector conn3 = new Connector();
-        conn3.setAlias("c1");
-        conn3.setFromFieldName(_f4.getFieldName());
-        conn3.setToFieldName(_f3.getFieldName());
-        c3.setConnector(conn3);
-
-        c1Child.add(c3);
-
-        //build Condition------------
-        // f2=2
-        MultiCondition rootCondition = new MultiCondition();
-        rootCondition.setConditionFieldName(_f2.getFieldName());
-        rootCondition.setConditionFieldValue("2");
-        connectorTree.setCondition(rootCondition);
-
-        //f4=1 or f5=2
-        List<Condition> conditionsC1 = new ArrayList<Condition>();
-        MultiCondition c1Condition = new MultiCondition(conditionsC1);
-        c1Condition.setCg(CG.OR);
-        Condition cc1 = new Condition();
-        cc1.setConditionFieldName(_f4.getFieldName());
-        cc1.setConditionFieldValue("1");
-        conditionsC1.add(cc1);
-//        Condition cc2 = new Condition();
-//        cc2.setConditionFieldName(_f5.getFieldName());
-//        cc2.setConditionFieldValue("2");
-//        conditionsC1.add(cc2);
-        //设置c1的条件
-        c1.setCondition(c1Condition);
-
-        //build Order By------------
-        OrderBy ob = new OrderBy();
-        ob.setOrder(Order.DESC);
-        ob.setOrderFieldName(_f6.getFieldName());
-        c1.setOrderBy(ob);
-
-//        GroupBy gb = new GroupBy();
-//        gb.setGroupFieldName(_f2.getFieldName());
-//        connectorTree.setGroupBy(gb);
-
-
-        // -------- build connectorTree  end ---------
-
-
+        return oi;
     }
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        if (dsView != null) {
-            mysqlDataManager.dropTable(dsView);
-            dsView = null;
-            oiView2 = null;
-        }
-    }
+
 
     /**
-     * Test Export From DS
-     */
-    public void testExportFromPhysicsDS() throws DBException {
-        DS ds = new DS();
-        ds.setConnectionUrl("jdbc:mysql://db201.dev.rs.com:3306/xiwa_nvwa_818?useUnicode=true&characterEncoding=utf8");
-        ds.setConnectionUsername("nvwa");
-        ds.setConnectionPassword("nvwa_user");
-
-        DSView dsView = mysqlDataManager.exportFromPhysicsDS(ds);
-
-        System.out.println(JSON.toJSONString(dsView));
-    }
-
-    /**
-     * dsView导入到数据库
-     */
-    public void testImportFromDS() {
-
-        //上面已经测试过了
-    }
-
-    /**
-     * 测试工具类
+     * 初始化字段
      *
+     * @param oi          oi
+     * @param name        name
+     * @param fieldName   fieldName
+     * @param dt          dt
+     * @param fieldLength fieldLength
      * @return
      */
-    private DSView getDSView() {
-        DS ds = new DS();
-        ds.setConnectionUrl("jdbc:mysql://localhost:3306/ty?useUnicode=true&characterEncoding=utf8&autoReconnect=true&user=root&password=&p");
-        ds.setConnectionUsername("root");
-        ds.setConnectionPassword("");
-        try {
-            return mysqlDataManager.exportFromPhysicsDS(ds);
-        } catch (DBException e) {
-            e.printStackTrace();
-            return null;
-        }
+    protected Field initField(OI oi, String name, String fieldName, DT dt, int fieldLength) {
+        return this.initField(oi, name, fieldName, dt, fieldLength, false);
     }
 
     /**
-     * 取第一张表作为测试
+     * 初始化字段
      *
+     * @param oi          oi
+     * @param name        name
+     * @param fieldName   fieldName
+     * @param dt          dt
+     * @param fieldLength fieldLength
+     * @param isPK        isPK
      * @return
      */
-    private OIView getOIView() {
-        OIView oiView = null;
-        DSView dsView = this.getDSView();
-        List<OIView> oiViews = dsView.getOiViews();
-        if (oiViews != null) {
-            oiView = oiViews.get(0);
-        }
-        return oiView;
+    protected Field initField(OI oi, String name, String fieldName, DT dt, int fieldLength, boolean isPK) {
+        return this.initField(oi, name, fieldName, null, dt, fieldLength, isPK);
     }
 
     /**
-     * 读取
+     * 初始化字段
      *
-     * @throws DBException
+     * @param oi          oi
+     * @param name        name
+     * @param fieldName   fieldName
+     * @param fieldValue  fieldValue
+     * @param dt          dt
+     * @param fieldLength fieldLength
+     * @param isPK        isPK
+     * @return
      */
-    public void testRead() throws DBException {
-        OIView oiView = getOIView();
-        Field pkField = null;
-        List<Field> fields = oiView.getFields();
-        for (Field field : fields) {
-            if (field.isPk()) {
-                pkField = field;
-                break;
-            }
-        }
-        pkField.setFieldValue("7");//设置主键值
-        mysqlDataManager.read(oiView.getOi(), fields, pkField);
-    }
-
-    /**
-     * 删除
-     *
-     * @throws DBException
-     */
-    public void testDelete() throws DBException {
-        OIView oiView = getOIView();
-        Field pkField = null;
-        List<Field> fields = oiView.getFields();
-        for (Field field : fields) {
-            if (field.isPk()) {
-                pkField = field;
-                break;
-            }
-        }
-        if (id > 0) {
-            pkField.setFieldValue(String.valueOf(id));//设置主键值
-        } else {
-            pkField.setFieldValue("8");//设置主键值
-        }
-        mysqlDataManager.delete(oiView.getOi(), pkField);
-    }
-
-    /**
-     * 创建
-     *
-     * @throws DBException
-     */
-    public void testCreate() throws DBException {
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-        for (Field field : fields) {
-            if (!field.isPk()) {
-                if (DT.INT.equals(field.getDt()) || DT.Double.equals(field.getDt()) || DT.Boolean.equals(field.getDt())) {
-                    field.setFieldValue("0");
-                } else {
-                    field.setFieldValue("你好");
-                }
-            }
-        }
-        id = DataUtil.getInt(mysqlDataManager.create(oiView.getOi(), fields), 0);
-    }
-
-    /**
-     * 更新
-     *
-     * @throws DBException
-     */
-    public void testUpdate() throws DBException {
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-
-        //把主键去除
-        Iterator<Field> fieldsItr = fields.iterator();
-        while (fieldsItr.hasNext()) {
-            Field f = fieldsItr.next();
-            if (f.isPk()) {
-                fieldsItr.remove();
-            }
-        }
-
-        Field pkField = null;
-        for (Field field : fields) {
-            if (!field.isPk()) {
-                if (DT.INT.equals(field.getDt()) || DT.Double.equals(field.getDt()) || DT.Boolean.equals(field.getDt())) {
-                    field.setFieldValue("0");
-                } else {
-                    field.setFieldValue("你好2");
-                }
-            } else {
-                pkField = field;
-            }
-        }
-        pkField.setFieldValue("6");//设置主键值   更新id为6的数据
-        mysqlDataManager.update(oiView.getOi(), fields, pkField);
-    }
-
-    /**
-     * 列表
-     *
-     * @throws DBException
-     */
-    public void testList() throws DBException {
-
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-        List<Condition> conList = new ArrayList<Condition>();
-        for (Field field : fields) {
-            if (field.getFieldName().equals("name")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.LIKE.getName());
-                conList.add(c);
-            } else if (field.getFieldName().equals("alias")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.EQ.getName());
-                conList.add(c);
-            }
-        }
-        MultiCondition condition = new MultiCondition(conList);
-        mysqlDataManager.list(oiView.getOi(), fields, condition);
-    }
-
-    /**
-     * 条件删除
-     *
-     * @throws DBException
-     */
-    public void testDelete2() throws DBException {
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-        List<Condition> conList = new ArrayList<Condition>();
-        for (Field field : fields) {
-            if (field.getFieldName().equals("name")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.LIKE.getName());
-                conList.add(c);
-            } else if (field.getFieldName().equals("alias")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好3");
-                c.setCt(CT.EQ.getName());
-                conList.add(c);
-            }
-        }
-        MultiCondition condition = new MultiCondition(conList);
-        mysqlDataManager.delete(oiView.getOi(), condition);
-    }
-
-
-    /**
-     * 条件更新
-     *
-     * @throws DBException
-     */
-    public void testUpdate2() throws DBException {
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-
-        Iterator<Field> fieldsItr = fields.iterator();
-        while (fieldsItr.hasNext()) {
-            Field f = fieldsItr.next();
-            if (f.isPk()) {
-                fieldsItr.remove();
-            }
-        }
-
-        List<Condition> conList = new ArrayList<Condition>();
-        for (Field field : fields) {
-            if (!field.isPk()) {
-                if (DT.INT.equals(field.getDt()) || DT.Double.equals(field.getDt()) || DT.Boolean.equals(field.getDt())) {
-                    field.setFieldValue("0");
-                } else {
-                    field.setFieldValue("你好4");
-                }
-            }
-
-            if (field.getFieldName().equals("name")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.LIKE.getName());
-                conList.add(c);
-            } else if (field.getFieldName().equals("alias")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好3");
-                c.setCt(CT.EQ.getName());
-                conList.add(c);
-            }
-        }
-        MultiCondition condition = new MultiCondition(conList);
-        mysqlDataManager.update(oiView.getOi(), fields, condition);
-    }
-
-
-    /**
-     * 分页查询
-     *
-     * @throws DBException
-     */
-    public void testPage() throws DBException {
-
-        OIView oiView = getOIView();
-        List<Field> fields = oiView.getFields();
-        List<Condition> conList = new ArrayList<Condition>();
-        for (Field field : fields) {
-            if (field.getFieldName().equals("name")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.LIKE.getName());
-                conList.add(c);
-            } else if (field.getFieldName().equals("alias")) {
-                Condition c = new Condition();
-                c.setConditionFieldName(field.getFieldName());
-                c.setConditionFieldValue("你好");
-                c.setCt(CT.LIKE.getName());
-                conList.add(c);
-            }
-        }
-        MultiCondition condition = new MultiCondition(conList);
-
-        mysqlDataManager.page(oiView.getOi(), fields, 1, 2, condition);
-    }
-
-    /**
-     * connectorTree形式的list查询
-     *
-     * @throws DBException
-     */
-    public void testListTree() throws DBException {
-
-        DataList dl = mysqlDataManager.list(connectorTree);
-        System.out.println("dataList=" + JSON.toJSONString(dl));
-
-    }
-
-    /**
-     * connectorTree形式的page查询
-     *
-     * @throws DBException
-     */
-    public void testPageTree() throws DBException {
-
-        DataPage dl = mysqlDataManager.page(1, 2, connectorTree);
-        System.out.println("dataList=" + JSON.toJSONString(dl));
-
-    }
-
-    /**
-     * connectorTree形式的read查询
-     *
-     * @throws DBException
-     */
-    public void testReadTree() throws DBException {
-
-        Data dl = mysqlDataManager.read(connectorTree);
-        System.out.println("dataList=" + JSON.toJSONString(dl));
-
+    protected Field initField(OI oi, String name, String fieldName, String fieldValue, DT dt, int fieldLength, boolean isPK) {
+        Field fId = new Field();
+        fId.setDt(dt.getType());
+        fId.setName(name);
+        fId.setFieldName(fieldName);
+        fId.setOiAlias(oi.getAlias());
+        fId.setFieldLength(fieldLength);
+        fId.setPk(isPK);
+        fId.setFieldValue(fieldValue);
+        return fId;
     }
 
 }

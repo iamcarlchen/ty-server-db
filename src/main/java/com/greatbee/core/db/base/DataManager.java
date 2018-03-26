@@ -35,12 +35,6 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     private static Logger logger = Logger.getLogger(DataManager.class);
 
-    /**
-     * dsManager 直接链接nvwa配置库,主要用于获取connection
-     */
-    @Autowired
-    private DSManager dsManager;
-
     @Override
     public Data read(ConnectorTree connectorTree) throws DBException {
         DataList dl = this.list(connectorTree);
@@ -183,7 +177,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Field pkField) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException, DBException {
                 return buildingDeleteQuery(oi, pkField, conn, ps);
             }
         });
@@ -193,7 +187,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public void delete(OI oi, Condition condition) throws DBException {
         this.executUpdateQuery(oi.getDsAlias(), new QueryHandler() {
             @Override
-            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException {
+            public PreparedStatement execute(Connection conn, PreparedStatement ps) throws SQLException, DBException {
                 return buildingDeleteQuery(oi, condition, conn, ps);
             }
         });
@@ -217,8 +211,9 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
                 e.printStackTrace();
                 throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
             } finally {
-                _releaseRs(rs);
-                _releaseConn(conn, ps);
+                this.releaseResultSet(rs);
+                this.releasePreparedStatement(ps);
+                this.releaseConnection(conn);
             }
 
             return result;
@@ -246,6 +241,46 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     }
 
     @Override
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
+        if (CollectionUtil.isInvalid(transactionNodes)) {
+            //没有需要执行的事务组件
+            throw new DBException("没有需要执行的事务组件", ERROR_DB_DS_NOT_FOUND);
+        }
+        Connection conn = null;
+        try {
+            conn = this.getConnection(ds.getAlias());
+            /**
+             * 禁止自动提交
+             */
+            conn.setAutoCommit(false);
+            for (BaseTransactionTemplate node : transactionNodes) {
+                /**
+                 * 执行事务节点
+                 */
+                node.execute(conn);
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                /**
+                 * 回滚内容
+                 */
+                conn.rollback();
+                throw new DBException("数据库事务执行失败,回滚成功", ERROR_DB_TRANSACTION_ERROR);
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                throw new DBException("数据库事务执行失败,回滚失败", ERROR_DB_TRANSACTION_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DBException("数据库事务执行失败,回滚失败", ERROR_DB_TRANSACTION_ERROR);
+        } finally {
+            this.releaseConnection(conn);
+        }
+    }
+
+    @Override
     public abstract DSView exportFromPhysicsDS(DS ds) throws DBException;
 
     @Override
@@ -269,11 +304,11 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 
     public abstract void buildingDataObject(ResultSet rs, List<Field> fields, Data data) throws SQLException;
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException;
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Condition condition, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
     public abstract String executeCreateQuery(OI oi, List<Field> fields, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
-    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException;
+    public abstract PreparedStatement buildingDeleteQuery(OI oi, Field pkField, Connection conn, PreparedStatement ps) throws SQLException, DBException;
 
     public abstract PreparedStatement buildingUpdateQuery(OI oi, List<Field> fields, Field pkField, Connection conn, PreparedStatement ps) throws DBException, SQLException;
 

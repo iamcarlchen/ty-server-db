@@ -8,6 +8,7 @@ import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.*;
 import com.greatbee.core.db.base.DataManager;
 import com.greatbee.core.db.oracle.util.OracleBuildUtils;
@@ -110,7 +111,7 @@ public class SQLServerDataManager extends DataManager {
             e.printStackTrace();
             throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
         } finally {
-            this._releaseConn(conn);
+            this.releaseConnection(conn);
         }
 
         return tableName1;
@@ -458,5 +459,10 @@ public class SQLServerDataManager extends DataManager {
         SqlServerConditionUtil.buildConditionSqlPs(_index, ps, condition);
 
         return ps;
+    }
+
+    @Override
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException {
+
     }
 }

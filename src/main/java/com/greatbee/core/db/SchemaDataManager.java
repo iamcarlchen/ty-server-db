@@ -4,6 +4,7 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.view.DSView;
 import com.greatbee.core.bean.view.DiffItem;
 
 import java.util.List;
@@ -20,9 +21,9 @@ public interface SchemaDataManager {
      *
      * @param ds
      * @return
-     * @throws DBException
+     * @throws DBException`
      */
-    public List<DiffItem> diff(DS ds) throws DBException;
+    public List<DiffItem> diff(DSView dsView) throws DBException;
 
     /**
      * 创建表
@@ -30,7 +31,7 @@ public interface SchemaDataManager {
      * @param oi
      * @throws DBException
      */
-    public void createTable(OI oi) throws DBException;
+    public void createTable(OI oi,List<Field> dFields) throws DBException;
 
     /**
      * 删除表
@@ -65,5 +66,14 @@ public interface SchemaDataManager {
      * @param field
      * @throws DBException
      */
-    public void updateField(OI oi, Field field) throws DBException;
+    public void updateField(OI oi, Field oldField, Field newField) throws DBException;
+
+    /**
+     * 更新字段
+     *
+     * @param oi
+     * @param field
+     * @throws DBException
+     */
+    public void updateField(OI oi, Field updateField) throws DBException;
 }

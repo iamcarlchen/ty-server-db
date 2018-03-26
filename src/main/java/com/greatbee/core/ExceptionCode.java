@@ -43,6 +43,16 @@ public interface ExceptionCode {
     public static final long ERROR_DB_RS_CLOSE_ERROR = 200007;//关闭Resultset错误
     public static final long ERROR_DB_CONT_IS_NULL = 200008;//链接查询connector为空
     public static final long ERROR_DB_DST_NOT_SUPPORT = 200009;//数据源类型不支持
+    public static final long ERROR_DB_OI_INVAlID = 200010;//OI为空
+    public static final long ERROR_DB_OI_DS_INVAlID = 200011;//OI的DS为空
+    public static final long ERROR_DB_OI_ALIAS_INVAlID = 200012;//OI的Alias为空
+    public static final long ERROR_DB_OIView_INVAlID = 200013;//OIView为空
+    public static final long ERROR_DB_FIELD_NOT_EXIST = 200014;//字段不存在为空
+    public static final long ERROR_DB_FIELD_EXIST = 200015;//字段已存在
+    public static final long ERROR_DB_TABLE_NOT_EXIST = 200016;//表不存在
+    public static final long ERROR_DB_TABLE_EXIST = 200017;//表已存在
+    public static final long ERROR_DB_TRANSACTION_NOT_FOUND = 200018;//没有需要执行的事务
+    public static final long ERROR_DB_TRANSACTION_ERROR = 200019;//数据库事务执行失败
 
     //Lego的相关异常Code以3开头
     public static final long ERROR_LEGO_ADD = 300001;
@@ -70,6 +80,8 @@ public interface ExceptionCode {
     public static final long ERROR_LEGO_DS_ALIAS_INVALIDATE = 300015;
     public static final long ERROR_LEGO_GENERATE = 300016;
     public static final long ERROR_LEGO_CUSTOM_CONDITION_PARAM = 300016;
+    public static final long ERROR_LEGO_SCHEMA_EXECUTE_ERROR = 300017;
+    public static final long ERROR_LEGO_TRANSACTION_EXECUTE_ERROR = 300018;
 
     //字段验证相关异常以4开头
     public static final long ERROR_FIELD_VALIDATE_PARAMS_INVALID = 400001;

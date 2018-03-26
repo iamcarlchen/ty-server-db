@@ -15,7 +15,7 @@ public class OI extends SimpleIND implements IND, AliasBean {
     private String alias;
     // /pic
     private String resource;
-    //所属数据源别名
+    //所属数据源别名(数据库表明)
     private String dsAlias;
 
     public String getAlias() {

@@ -17,6 +17,16 @@
     <!-- DS Manager-->
     <bean id="dsManager" class="com.greatbee.core.manager.ext.SimpleDSManager" parent="abstractBasicManager"/>
 
+    <!-- OI Manager-->
+    <bean id="oiManager" class="com.greatbee.core.manager.ext.SimpleOIManager" parent="abstractBasicManager"/>
+
+    <!-- Field Manager-->
+    <bean id="fieldManager" class="com.greatbee.core.manager.ext.SimpleFieldManager" parent="abstractBasicManager"/>
+
+    <!-- Connector Manager-->
+    <bean id="connectorManager" class="com.greatbee.core.manager.ext.SimpleConnectorManager"
+          parent="abstractBasicManager"/>
+
     <!-- Mysql Data Manager-->
     <bean id="mysqlDataManager" class="com.greatbee.core.db.mysql.manager.MysqlDataManager"/>
 

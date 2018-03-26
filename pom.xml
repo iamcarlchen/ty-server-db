@@ -1,21 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project 
+    xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>greatbee</groupId>
     <artifactId>ty-server-db</artifactId>
-    <version>1.0.6</version>
-
+    <version>1.1.0</version>
     <name>ty-server-db</name>
     <packaging>jar</packaging>
     <build>
         <plugins>
-            <!-- <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin> -->
+            <!-- <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -25,9 +20,21 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <!--测试插件-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/Abstract*.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
     <distributionManagement>
         <repository>
             <id>releases</id>
@@ -40,19 +47,11 @@
             <url>http://nexus.corp.rs.com/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-
     <properties>
         <spring.version>4.2.0.RELEASE</spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <!-- <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.2.5.RELEASE</version>
-        <relativePath/>
-    </parent> -->
-
+    <!-- <parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>1.2.5.RELEASE</version><relativePath/></parent> -->
     <dependencies>
         <!-- TY Server Base-->
         <dependency>
@@ -66,7 +65,6 @@
             <artifactId>ty-lego-api</artifactId>
             <version>1.0.1</version>
         </dependency>
-
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -114,7 +112,6 @@
             <artifactId>commons-net</artifactId>
             <version>3.5</version>
         </dependency>
-
         <!-- spring-->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -156,8 +153,14 @@
             <artifactId>spring-orm</artifactId>
             <version>4.3.3.RELEASE</version>
         </dependency>
+        <dependency>
+            <!-- spring对测试框架的简单封装功能 -->
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
+        </dependency>
         <!-- spring end-->
-
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
@@ -168,7 +171,6 @@
             <artifactId>aspectjweaver</artifactId>
             <version>1.6.1</version>
         </dependency>
-
         <!-- 导入，导出工具-->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -181,27 +183,27 @@
             <version>3.14</version>
         </dependency>
         <!-- 导入，导出工具  end-->
-
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.3.2</version>
         </dependency>
-
-
         <!-- Data source-->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>4.3.11.Final</version>
         </dependency>
-
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>2.2.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>2.2.0</version>
+        </dependency>
         <!-- redis -->
         <dependency>
             <groupId>redis.clients</groupId>
@@ -236,7 +238,5 @@
             <artifactId>tomcat-juli</artifactId>
             <version>8.5.23</version>
         </dependency>
-
-
     </dependencies>
 </project>

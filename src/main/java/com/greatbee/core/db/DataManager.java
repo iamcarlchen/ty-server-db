@@ -4,8 +4,10 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
 import com.greatbee.base.bean.DataPage;
+import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.Condition;
 
 import java.util.List;
@@ -90,4 +92,11 @@ public interface DataManager {
      * @param condition
      */
     public void update(OI oi, List<Field> fields, Condition condition) throws DBException;
+
+    /**
+     * 执行事务(http://iweb.corp.rs.com/issues/61026)
+     *
+     * @throws DBException
+     */
+    public void executeTransaction(DS ds, List<BaseTransactionTemplate> transactionNodes) throws DBException;
 }
