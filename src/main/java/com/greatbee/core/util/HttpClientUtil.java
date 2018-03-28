@@ -3,12 +3,18 @@ package com.greatbee.core.util;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
+import com.greatbee.base.util.ArrayUtil;
 import com.greatbee.base.util.Charset;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
 
+import com.greatbee.core.bean.view.*;
+import org.apache.commons.httpclient.*;
 import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -31,7 +37,6 @@ import sun.net.www.protocol.http.HttpURLConnection;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -47,15 +52,15 @@ public class HttpClientUtil implements ExceptionCode {
      * Invoke
      *
      * @param httpclient
-     * @param httpost
+     * @param request
      * @return
      */
-    private static String invoke(HttpClient httpclient,
-                                 HttpUriRequest httpost, Map<String, Object> responseMap) {
+    private static RestApiResponse invoke(HttpClient httpclient,
+                                          HttpUriRequest request) {
         HttpResponse response = null;
 
         try {
-            response = httpclient.execute(httpost);
+            response = httpclient.execute(request);
         } catch (ClientProtocolException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -66,19 +71,23 @@ public class HttpClientUtil implements ExceptionCode {
         HttpEntity entity = response.getEntity();
         String body = null;
         Header[] headers = response.getAllHeaders();
+
         try {
             body = EntityUtils.toString(entity, "UTF-8");
-            if (responseMap != null) {
-                responseMap.put(KEY_HEADER, headers);
-                responseMap.put("body", body);
+            //设置response body
+            RestApiResponse restApiResponse = new RestApiResponse(body);
+            if (ArrayUtil.isValid(headers)) {
+                for (Header item : headers) {
+                    restApiResponse.addHeader(item.getName(), item.getValue());
+                }
             }
+            return restApiResponse;
         } catch (ParseException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return body;
+        return null;
     }
 
     /**
@@ -87,7 +96,7 @@ public class HttpClientUtil implements ExceptionCode {
      * @param url
      * @return
      */
-    public static String get(String url, Map<String, String> headerParams) throws DBException {
+    public static RestApiResponse get(String url, Map<String, String> headerParams) throws DBException {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         HttpGet httpget = new HttpGet(url);
         if (CollectionUtil.isValid(headerParams)) {
@@ -97,9 +106,9 @@ public class HttpClientUtil implements ExceptionCode {
                 httpget.setHeader(key, headerParams.get(key));
             }
         }
-        String response = invoke(httpClient, httpget, null);
+        RestApiResponse response = invoke(httpClient, httpget);
         httpClient.getConnectionManager().shutdown();
-        if (StringUtil.isInvalid(response)) {
+        if (StringUtil.isInvalid(response.getResponseBody())) {
             throw new DBException("response is null", ERROR_DB_HTTP_ERROR);
         }
         return response;
@@ -112,8 +121,8 @@ public class HttpClientUtil implements ExceptionCode {
      * @param params
      * @return
      */
-    public static JSONObject post(String url, Map<String, String> params) {
-        return post(url, params, null, false);
+    public static RestApiResponse post(String url, Map<String, String> params) {
+        return post(url, params, null);
     }
 
     /**
@@ -123,7 +132,7 @@ public class HttpClientUtil implements ExceptionCode {
      * @param params
      * @return
      */
-    public static JSONObject post(String url, Map<String, String> params, Map<String, String> headerParams, boolean haveResponseHeader) {
+    public static RestApiResponse post(String url, Map<String, String> params, Map<String, String> headerParams) {
         System.out.println(url);
         DefaultHttpClient httpClient = new DefaultHttpClient();
         // httpClint的请求等待超时时间设定5秒
@@ -155,25 +164,11 @@ public class HttpClientUtil implements ExceptionCode {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
-        String response = "";
-        if (!haveResponseHeader) {
-            response = invoke(httpClient, httpost, null);
-            return JSONObject.parseObject(response);
-        } else {
-            Map<String, Object> responseMap = new HashMap<String, Object>();
-            response = invoke(httpClient, httpost, responseMap);
-            JSONObject responseObject = JSONObject.parseObject(response);
-            if (responseMap.containsKey(KEY_HEADER)) {
-                responseObject.put(KEY_HEADER, responseMap.get(KEY_HEADER));
-            }
-            return responseObject;
-        }
+        RestApiResponse response = invoke(httpClient, httpost);
+        return response;
     }
 
-    public static JSONObject httpGet(String url, Map<String, String> headerParams) throws DBException {
-        return JSON.parseObject(get(url, headerParams));
-    }
+    //TODO:暂时不用的函数
 
     public static String sendPostBody(String postUrl, String postBody) throws DBException {
         try {

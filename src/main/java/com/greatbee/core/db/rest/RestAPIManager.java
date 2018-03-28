@@ -7,6 +7,7 @@ import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.RestApiFieldGroupType;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.view.RestApiResponse;
 import com.greatbee.core.db.UnstructuredDataManager;
 import com.greatbee.core.util.HttpClientUtil;
 import com.greatbee.core.util.OIUtils;
@@ -28,22 +29,22 @@ public class RestAPIManager implements UnstructuredDataManager {
 
 
     @Override
-    public String connect(OI oi, List<Field> fields) throws DBException {
+    public Object connect(OI oi, List<Field> fields) throws DBException {
         //验证oi是否有效
         OIUtils.isValid(oi);
         String method = _buildingMethod(fields);
         StringBuilder requestURLBuilder = new StringBuilder();
         requestURLBuilder.append(oi.getResource());
-        JSONObject data = null;
+        RestApiResponse data = null;
         if (method.equalsIgnoreCase(METHOD_TYPE_POST)) {
             //post请求
-            data = HttpClientUtil.httpGet(_setReuqetPathParm(requestURLBuilder, fields), _buildingHeaderBody(fields));
+            data = HttpClientUtil.get(_setReuqetPathParm(requestURLBuilder, fields), _buildingHeaderBody(fields));
         } else if (method.equalsIgnoreCase(METHOD_TYPE_GET)) {
             //get请求
-            data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields), false);
+            data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields));
         }
 
-        return data.toJSONString();
+        return data;
     }
 
 

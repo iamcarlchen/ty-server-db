@@ -19,5 +19,5 @@ public interface UnstructuredDataManager {
      * @param fields
      * @return
      */
-    public String connect(OI oi, List<Field> fields) throws DBException;
+    public Object connect(OI oi, List<Field> fields) throws DBException;
 }
