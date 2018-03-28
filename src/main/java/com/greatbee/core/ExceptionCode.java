@@ -53,6 +53,7 @@ public interface ExceptionCode {
     public static final long ERROR_DB_TABLE_EXIST = 200017;//表已存在
     public static final long ERROR_DB_TRANSACTION_NOT_FOUND = 200018;//没有需要执行的事务
     public static final long ERROR_DB_TRANSACTION_ERROR = 200019;//数据库事务执行失败
+    public static final long ERROR_DB_HTTP_ERROR = 200020;//HTTP请求执行失败
 
     //Lego的相关异常Code以3开头
     public static final long ERROR_LEGO_ADD = 300001;

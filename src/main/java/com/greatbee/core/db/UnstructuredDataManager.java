@@ -1,5 +1,6 @@
 package com.greatbee.core.db;
 
+import com.greatbee.base.bean.DBException;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 
@@ -18,5 +19,5 @@ public interface UnstructuredDataManager {
      * @param fields
      * @return
      */
-    public String connect(OI oi, List<Field> fields);
+    public String connect(OI oi, List<Field> fields) throws DBException;
 }
