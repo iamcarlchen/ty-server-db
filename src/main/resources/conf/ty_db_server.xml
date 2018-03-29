@@ -35,4 +35,7 @@
 
     <!-- SQLServer Data Manager-->
     <bean id="sqlServerDataManager" class="com.greatbee.core.db.sqlserver.manager.SQLServerDataManager"/>
+
+    <!-- Rest API Data Manager-->
+    <bean id="restAPIManager" class="com.greatbee.core.db.rest.RestAPIManager"/>
 </beans>
