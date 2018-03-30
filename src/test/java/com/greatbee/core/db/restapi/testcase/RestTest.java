@@ -40,7 +40,6 @@ public class RestTest extends BaseConnectTest {
             Class c = Class.forName("com.greatbee.core.db.UnstructuredDataManager");
             Object restAPIManager = wac.getBean("restAPIManager");
             Method entryPoint = c.getMethod("connect", OI.class, List.class);
-
             RestApiResponse restApiResponse = (RestApiResponse) entryPoint.invoke(restAPIManager, oi, fields);
             printJSONObject(restApiResponse);
 
