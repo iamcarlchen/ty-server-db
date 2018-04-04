@@ -16,6 +16,8 @@ import com.greatbee.core.bean.server.InputField;
 import com.greatbee.core.bean.view.RestApiResponse;
 import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.db.rest.RestAPIManager;
+import com.greatbee.core.manager.FieldManager;
+import com.greatbee.core.manager.OIManager;
 import com.greatbee.core.util.SpringContextUtil;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,10 @@ public class RestApiExecute implements Lego, ExceptionCode {
 
     @Autowired
     protected RestAPIManager restAPIManager;
+    @Autowired
+    private OIManager oiManager;
+    @Autowired
+    private FieldManager fieldManager;
 
     /**
      * 执行
@@ -46,7 +52,7 @@ public class RestApiExecute implements Lego, ExceptionCode {
 //        String method = StringUtil.getString(methodField.getFieldValue(), "get");
         //获取对应的oi
         //获取对应的field
-        List<InputField> inputFields = input.getInputFields();
+        List<InputField> inputFields = input.getInputField(IOFT.Unstructured);
         String oiAlias = input.getApiLego().getOiAlias();
 
         //通过 oiAlias获取OI
@@ -55,13 +61,15 @@ public class RestApiExecute implements Lego, ExceptionCode {
         List<Field> restFieldsList = new ArrayList<Field>();
         RestApiResponse restApiResponse;
         try {
-            Class c = Class.forName("com.greatbee.core.manager.TyCacheService");
-            Object tyCacheService = wac.getBean("tyCacheService");
-            Method getOIByAliasMethod = c.getMethod("getOIByAlias", String.class);
-            oi = (OI) getOIByAliasMethod.invoke(tyCacheService, oiAlias);
+//            Class c = Class.forName("com.greatbee.core.manager.TyCacheService");
+//            Object tyCacheService = wac.getBean("tyCacheService");
+//            Method getOIByAliasMethod = c.getMethod("getOIByAlias", String.class);
+//            oi = (OI) getOIByAliasMethod.invoke(tyCacheService, oiAlias);
+            oi = oiManager.getOIByAlias(oiAlias);
 
-            Method oiAliasMethod = c.getMethod("getFields", String.class);
-            oiFields = (List<Field>) oiAliasMethod.invoke(tyCacheService, oiAlias);
+//            Method oiAliasMethod = c.getMethod("getFields", String.class);
+//            oiFields = (List<Field>) oiAliasMethod.invoke(tyCacheService, oiAlias);
+            oiFields = fieldManager.getFields(oiAlias);
             if (CollectionUtil.isValid(oiFields)) {
                 for (Field field : oiFields) {
                     InputField target = null;
@@ -96,6 +104,7 @@ public class RestApiExecute implements Lego, ExceptionCode {
          * 返回内容
          */
         output.setOutputValue("response", restApiResponse);
+        output.setOutputValue("response_json", JSONObject.parse(restApiResponse.getResponseBody()));
     }
 
 
