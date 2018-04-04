@@ -44,7 +44,7 @@
         <property name="pk" column="pk" type="boolean"/>
         <property name="fieldValue" column="fieldValue" type="string"/>
         <property name="fieldLength" column="fieldLength" type="integer"/>
-        <property name="group" column="group" type="string"/>
+        <property name="group" column="`group`" type="string"/>
     </class>
 
     <!-- Connector-->
