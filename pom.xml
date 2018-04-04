@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>greatbee</groupId>
     <artifactId>ty-server-db</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0-alpha1</version>
     <name>ty-server-db</name>
     <packaging>jar</packaging>
     <build>
@@ -237,6 +237,22 @@
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-juli</artifactId>
             <version>8.5.23</version>
+        </dependency>
+        <!--http-->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.9</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.1</version>
         </dependency>
     </dependencies>
 </project>
