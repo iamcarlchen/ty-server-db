@@ -4,13 +4,20 @@ import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
+import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.RestApiFieldGroupType;
+import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.view.RestApiResponse;
 import com.greatbee.core.db.UnstructuredDataManager;
+import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.HttpClientUtil;
 import com.greatbee.core.util.OIUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,29 +28,38 @@ import java.util.Map;
  * Author: CarlChen
  * Date: 2018/3/20
  */
-public class RestAPIManager implements UnstructuredDataManager {
+public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
 
     private static final String METHOD_TYPE_POST = "post";
     private static final String METHOD_TYPE_GET = "get";
 
+    @Autowired
+    private DSManager dsManager;
 
     @Override
-    public String connect(OI oi, List<Field> fields) throws DBException {
+    public Object connect(OI oi, List<Field> fields) throws DBException {
         //验证oi是否有效
         OIUtils.isValid(oi);
-        String method = _buildingMethod(fields);
-        StringBuilder requestURLBuilder = new StringBuilder();
-        requestURLBuilder.append(oi.getResource());
-        JSONObject data = null;
-        if (method.equalsIgnoreCase(METHOD_TYPE_POST)) {
-            //post请求
-            data = HttpClientUtil.httpGet(_setReuqetPathParm(requestURLBuilder, fields), _buildingHeaderBody(fields));
-        } else if (method.equalsIgnoreCase(METHOD_TYPE_GET)) {
-            //get请求
-            data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields), false);
+        DS ds = dsManager.getDSByAlias(oi.getDsAlias());
+        if (ds == null) {
+            throw new DBException("数据源没有找到", ERROR_DB_DS_NOT_FOUND);
+        } else if (StringUtil.isInvalid(ds.getConnectionUrl())) {
+            throw new DBException("rest api服务器数据源没有配置", ERROR_DB_DS_NOT_FOUND);
         }
 
-        return data.toJSONString();
+        String method = _buildingMethod(fields);
+        StringBuilder requestURLBuilder = new StringBuilder(ds.getConnectionUrl());
+        requestURLBuilder.append(oi.getResource());
+        RestApiResponse data = null;
+        if (method.equalsIgnoreCase(METHOD_TYPE_GET)) {
+            //post请求
+            data = HttpClientUtil.get(_setReuqetPathParm(requestURLBuilder, fields), _buildingHeaderBody(fields));
+        } else if (method.equalsIgnoreCase(METHOD_TYPE_POST)) {
+            //get请求
+            data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields));
+        }
+
+        return data;
     }
 
 
@@ -59,7 +75,7 @@ public class RestAPIManager implements UnstructuredDataManager {
         if (CollectionUtil.isValid(fields)) {
             for (Field field : fields) {
                 if (StringUtil.isValid(field.getGroup()) && field.getGroup().equalsIgnoreCase(RestApiFieldGroupType.Path.getType())) {
-                    urlBuilder = new StringBuilder(urlBuilder.toString().replaceAll("{" + field.getFieldName() + "}", StringUtil.getString(field.getFieldValue(), "")));
+                    urlBuilder = new StringBuilder(urlBuilder.toString().replaceAll("\\{" + field.getFieldName() + "\\}", StringUtil.getString(field.getFieldValue(), "")));
                 }
             }
         }
@@ -68,7 +84,11 @@ public class RestAPIManager implements UnstructuredDataManager {
             StringBuilder queryStringBuilder = new StringBuilder("?");
             for (Field field : fields) {
                 if (StringUtil.isValid(field.getGroup()) && field.getGroup().equalsIgnoreCase(RestApiFieldGroupType.Get.getType())) {
-                    queryStringBuilder.append(field.getFieldName()).append("=").append(field.getFieldValue());
+                    try {
+                        queryStringBuilder.append(field.getFieldName()).append("=").append(URLEncoder.encode(field.getFieldValue(), "UTF8"));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             if (queryStringBuilder.length() > 1) {

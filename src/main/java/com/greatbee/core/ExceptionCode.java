@@ -83,6 +83,7 @@ public interface ExceptionCode {
     public static final long ERROR_LEGO_CUSTOM_CONDITION_PARAM = 300016;
     public static final long ERROR_LEGO_SCHEMA_EXECUTE_ERROR = 300017;
     public static final long ERROR_LEGO_TRANSACTION_EXECUTE_ERROR = 300018;
+    public static final long ERROR_LEGO_REST_EXECUTE_ERROR = 300019;
 
     //字段验证相关异常以4开头
     public static final long ERROR_FIELD_VALIDATE_PARAMS_INVALID = 400001;
