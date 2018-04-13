@@ -1,48 +1,33 @@
 package com.greatbee.core.db.mysql.manager;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import javax.sql.DataSource;
-
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
-import com.greatbee.base.bean.DataList;
-import com.greatbee.base.bean.DataPage;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.db.base.BaseTransactionTemplate;
-import com.greatbee.core.bean.view.Condition;
-import com.greatbee.core.bean.view.ConnectorTree;
-import com.greatbee.core.bean.view.DSView;
-
-import com.greatbee.core.bean.view.DiffItem;
-import com.greatbee.core.bean.view.OIView;
+import com.greatbee.core.bean.view.*;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.SchemaDataManager;
-import com.greatbee.core.db.base.BaseTYJDBCTemplate;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.db.base.DataManager;
 import com.greatbee.core.db.mysql.transaction.MysqlDeleteTransaction;
 import com.greatbee.core.db.mysql.transaction.MysqlUpdateTransaction;
 import com.greatbee.core.db.mysql.util.MysqlSchemaUtil;
-
 import com.greatbee.core.util.BuildUtils;
 import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.util.OIUtils;
-
 import org.apache.log4j.Logger;
+
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Mysql Data Manager
@@ -93,7 +78,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                     field.setDt(MysqlSchemaUtil.transferMysqlTypeToTySqlType(dataType, colSize));
                     field.setFieldName(colName);
                     field.setOiAlias(oi.getAlias());
-                    field.setFieldLength(colSize);
+                    field.setFieldLength(_buildColumnSize(dataType,colSize));
                     field.setDescription(remarks);
                     //是否主键
                     boolean isPk = false;
@@ -121,6 +106,37 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
         } finally {
             this.releaseConnection(conn);
         }
+    }
+
+    /**
+     * 计算字段的长度
+     * @param type
+     * @param colSize
+     * @return
+     */
+    private Integer _buildColumnSize(int type,int colSize){
+         switch(type){
+             case Types.INTEGER:
+                 if(colSize<Integer.MAX_VALUE){
+                     return colSize+1;
+                 }else{
+                     return colSize;
+                 }
+             case Types.BIGINT:
+                 if(colSize<Integer.MAX_VALUE){
+                     return colSize+1;
+                 }else{
+                     return colSize;
+                 }
+             case Types.DATE:
+                 return colSize+40;//有的时候ty传过来的时间可能带有时区，字段长度会超过ty字段长度校验，报错，这里设置一下加长字段的长度
+             case Types.TIME:
+                 return colSize+40;
+             case Types.TIMESTAMP:
+                 return colSize+40;
+             default:
+                 return colSize;
+         }
     }
 
     /**
