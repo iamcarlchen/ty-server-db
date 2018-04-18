@@ -24,10 +24,7 @@ import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Mysql Data Manager
@@ -89,6 +86,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                         }
                     }
                     field.setPk(isPk);
+                    field.setUuid(UUID.randomUUID().toString());
 
                     fields.add(field);
                 }

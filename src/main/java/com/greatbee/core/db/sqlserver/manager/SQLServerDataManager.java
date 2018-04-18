@@ -94,7 +94,7 @@ public class SQLServerDataManager extends DataManager {
                             break;
                         }
                     }
-
+                    field.setUuid(UUID.randomUUID().toString());
                     field.setPk(isPk);
                     fields1.add(field);
                 }

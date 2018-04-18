@@ -6,22 +6,21 @@ import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
 import com.greatbee.base.bean.DataPage;
 import com.greatbee.base.util.CollectionUtil;
-import com.greatbee.base.util.DataUtil;
-import com.greatbee.base.util.StringUtil;
-import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
+import com.greatbee.core.bean.view.Condition;
+import com.greatbee.core.bean.view.ConnectorTree;
+import com.greatbee.core.bean.view.DSView;
+import com.greatbee.core.bean.view.OIView;
+import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.db.base.BaseTYJDBCTemplate;
 import com.greatbee.core.db.base.BaseTransactionTemplate;
-import com.greatbee.core.bean.view.*;
-import com.greatbee.core.manager.DSManager;
-import com.greatbee.core.db.RelationalDataManager;
-import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.db.oracle.util.OracleBuildUtils;
 import com.greatbee.core.db.oracle.util.OracleConditionUtil;
-
+import com.greatbee.core.manager.DSManager;
+import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -108,7 +107,7 @@ public class OracleDataManager extends BaseTYJDBCTemplate implements RelationalD
                             break;
                         }
                     }
-
+                    field.setUuid(UUID.randomUUID().toString());
                     field.setPk(isPk);
                     fields1.add(field);
                 }
