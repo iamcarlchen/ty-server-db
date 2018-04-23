@@ -480,7 +480,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                         for (Field field : oiFields) {
                             //生成diff元件
                             diffItemList.add(
-                                    new DiffItem("2", oiView.getOi().getResource(), field.getFieldName(), null, field));
+                                    new DiffItem("2", oiView.getOi().getAlias(),oiView.getOi().getResource(), field.getFieldName(), null, field));
                         }
                     }
                     //没有字段就跳过
@@ -504,7 +504,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                             //表结构不存在
                             for (Field field : oiFields) {
                                 //生成diff元件
-                                diffItemList.add(new DiffItem("2", oiView.getOi().getResource(), field.getFieldName(),
+                                diffItemList.add(new DiffItem("2", oiView.getOi().getAlias(),oiView.getOi().getResource(), field.getFieldName(),
                                         null, field));
                             }
                             continue;
@@ -521,7 +521,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                             }
                             if (existDBField == null) {
                                 //字段不存在
-                                diffItemList.add(new DiffItem("4", oiView.getOi().getResource(), oiField.getFieldName(),
+                                diffItemList.add(new DiffItem("4", oiView.getOi().getAlias(),oiView.getOi().getResource(), oiField.getFieldName(),
                                         null, oiField));
                             } else {
                                 //表和字段都存在，比对属性
@@ -531,7 +531,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                                         || !oiField.getDt().equalsIgnoreCase(existDBField.getDt())) {
                                     //字段长度或类型不一样的时候
                                     //生成diff元件
-                                    diffItemList.add(new DiffItem("5", oiView.getOi().getResource(),
+                                    diffItemList.add(new DiffItem("5",oiView.getOi().getAlias(), oiView.getOi().getResource(),
                                             oiField.getFieldName(), existDBField, oiField));
                                 }
                             }
@@ -553,7 +553,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                         if (existOiView == null) {
                             //oi中缺少物理库中存在的表
                             for (Field dbField : dbFields) {
-                                diffItemList.add(new DiffItem("1", dbView.getOi().getResource(), dbField.getFieldName(),
+                                diffItemList.add(new DiffItem("1",dbView.getOi().getAlias(), dbView.getOi().getResource(), dbField.getFieldName(),
                                         dbField, null));
                             }
                         } else {
@@ -568,7 +568,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
 
                                 if (existOIField == null) {
                                     //OI中缺少物理表中的字段
-                                    diffItemList.add(new DiffItem("3", dbView.getOi().getResource(),
+                                    diffItemList.add(new DiffItem("3", dbView.getOi().getAlias(),dbView.getOi().getResource(),
                                             dbField.getFieldName(), dbField, null));
                                 }
                             }
@@ -588,7 +588,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                     for (Field field : dbFields) {
                         //生成diff元件
                         diffItemList.add(
-                                new DiffItem("1", dbView.getOi().getResource(), field.getFieldName(), field, null));
+                                new DiffItem("1", dbView.getOi().getAlias(), dbView.getOi().getResource(), field.getFieldName(), field, null));
                     }
                 }
                 //没有字段就跳过

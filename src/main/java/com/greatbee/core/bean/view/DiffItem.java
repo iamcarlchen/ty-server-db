@@ -18,7 +18,8 @@ public class DiffItem {
      * type=5: TY表配置的字段和物理表配置的字段类型等参数不一致
      */
     private String type;
-
+    //差异的oi别名，有的就存，没有就是空
+    private String oiAlias;
     //差异的相关表
     private String resource;
     //差异的相关字段
@@ -32,8 +33,9 @@ public class DiffItem {
 
     }
 
-    public DiffItem(String type, String resource, String fieldName, Field dbField, Field oiField) {
+    public DiffItem(String type,String oiAlias, String resource, String fieldName, Field dbField, Field oiField) {
         this.type = type;
+        this.oiAlias = oiAlias;
         this.resource = resource;
         this.fieldName = fieldName;
         this.dbField = dbField;
@@ -78,5 +80,13 @@ public class DiffItem {
 
     public Field getOiField() {
         return oiField;
+    }
+
+    public String getOiAlias() {
+        return oiAlias;
+    }
+
+    public void setOiAlias(String oiAlias) {
+        this.oiAlias = oiAlias;
     }
 }
