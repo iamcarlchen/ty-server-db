@@ -30,7 +30,7 @@ public class RestApiGetTest extends BaseConnectTest {
         List<Field> fields = new ArrayList<Field>();
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Get, "username", "王子恒"));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Header, "x-auth-token", this.getAuthToken()));
-        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(oi, fields);
+        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(null,oi, fields);
         printJSONObject(restApiResponse);
     }
 }

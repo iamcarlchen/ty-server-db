@@ -31,7 +31,7 @@ public class RestApiGetPathTest extends BaseConnectTest {
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Path, "alias", "test-rest-api-get-demo"));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Get, "username", "王子恒"));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Header, "x-auth-token", this.getAuthToken()));
-        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(oi, fields);
+        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(null,oi, fields);
         printJSONObject(restApiResponse);
     }
 }

@@ -4,6 +4,7 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -19,5 +20,5 @@ public interface UnstructuredDataManager {
      * @param fields
      * @return
      */
-    public Object connect(OI oi, List<Field> fields) throws DBException;
+    public Object connect(HttpServletRequest request,OI oi, List<Field> fields) throws DBException;
 }

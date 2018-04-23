@@ -31,7 +31,7 @@ public class RestApiPostTest extends BaseConnectTest {
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Post, "sex", "1"));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Header, "x-auth-token", this.getAuthToken()));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Method, "post", "post"));
-        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(oi, fields);
+        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(null,oi, fields);
         printJSONObject(restApiResponse);
     }
 }

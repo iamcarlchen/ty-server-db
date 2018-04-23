@@ -1,6 +1,5 @@
 package com.greatbee.core.db.rest;
 
-import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
@@ -11,11 +10,14 @@ import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.RestApiResponse;
 import com.greatbee.core.db.UnstructuredDataManager;
+import com.greatbee.core.lego.LegoException;
+import com.greatbee.core.lego.util.TemplateUtil;
 import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.util.HttpClientUtil;
 import com.greatbee.core.util.OIUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -37,7 +39,7 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
     private DSManager dsManager;
 
     @Override
-    public Object connect(OI oi, List<Field> fields) throws DBException {
+    public Object connect(HttpServletRequest request,OI oi, List<Field> fields) throws DBException {
         //验证oi是否有效
         OIUtils.isValid(oi);
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
@@ -48,7 +50,7 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
         }
 
         String method = _buildingMethod(fields);
-        StringBuilder requestURLBuilder = new StringBuilder(ds.getConnectionUrl());
+        StringBuilder requestURLBuilder = new StringBuilder(_buildApiRestUrl(ds.getConnectionUrl(), request));
         requestURLBuilder.append(oi.getResource());
         RestApiResponse data = null;
         if (method.equalsIgnoreCase(METHOD_TYPE_GET)) {
@@ -62,6 +64,31 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
         return data;
     }
 
+    /**
+     * 模板解析url（主要针对不同环境请求地址解析）
+     * @param tpl
+     * @param request
+     * @return
+     */
+    private String _buildApiRestUrl(String tpl,HttpServletRequest request) {
+        if(request==null){
+            return tpl;
+        }
+        String result = tpl;
+        Map<String, Object> params = new HashMap<>();
+        try {
+            params.put("request", TemplateUtil.getParameterMap(request));
+            params.put("session", TemplateUtil.getSessionAttributeMap(request));
+            String serverName = request.getServerName();
+            String[] hostArray = serverName.split("\\.");
+            params.put("serverName", serverName);
+            params.put("hostArray", hostArray);
+            result = TemplateUtil.transferInputValue(tpl, params);
+        }catch(LegoException e){
+            return result;
+        }
+        return result;
+    }
 
     /**
      * 设置URL上的参数

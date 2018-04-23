@@ -1,20 +1,13 @@
 package com.greatbee.core.lego;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.CollectionUtil;
-import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
-import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.constant.IOFT;
-import com.greatbee.core.bean.constant.RestApiFieldGroupType;
-import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.server.InputField;
 import com.greatbee.core.bean.view.RestApiResponse;
-import com.greatbee.core.db.SchemaDataManager;
 import com.greatbee.core.db.rest.RestAPIManager;
 import com.greatbee.core.manager.FieldManager;
 import com.greatbee.core.manager.OIManager;
@@ -24,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +77,7 @@ public class RestApiExecute implements Lego, ExceptionCode {
                     }
                 }
             }
-            restApiResponse = (RestApiResponse) restAPIManager.connect(oi, restFieldsList);
+            restApiResponse = (RestApiResponse) restAPIManager.connect(input.getRequest(),oi, restFieldsList);
 
         } catch (Exception e) {
             e.printStackTrace();

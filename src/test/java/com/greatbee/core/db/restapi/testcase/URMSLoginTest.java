@@ -31,7 +31,7 @@ public class URMSLoginTest extends BaseConnectTest {
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Post, "username", "xuechao.zhang"));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Post, "password", "z75eOjnx2yeW2sFu0WBXAQ=="));
         fields.add(initField(DT.String, 128, RestApiFieldGroupType.Method, "post", "post"));
-        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(oi, fields);
+        RestApiResponse restApiResponse = (RestApiResponse) restAPIManager.connect(null,oi, fields);
         printJSONObject(restApiResponse);
         Assert.assertNotNull(StringUtil.getString(restApiResponse.getHeader().get("x-auth-token")));
         Assert.assertTrue(StringUtil.getString(restApiResponse.getHeader().get("x-auth-token")).length() > 0);
