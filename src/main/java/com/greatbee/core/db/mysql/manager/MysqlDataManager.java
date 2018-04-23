@@ -507,6 +507,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                                 diffItemList.add(new DiffItem("2", oiView.getOi().getResource(), field.getFieldName(),
                                         null, field));
                             }
+                            continue;
                         }
 
                         for (Field oiField : oiFields) {
@@ -567,7 +568,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
 
                                 if (existOIField == null) {
                                     //OI中缺少物理表中的字段
-                                    diffItemList.add(new DiffItem("1", dbView.getOi().getResource(),
+                                    diffItemList.add(new DiffItem("3", dbView.getOi().getResource(),
                                             dbField.getFieldName(), dbField, null));
                                 }
                             }
