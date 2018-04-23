@@ -558,8 +558,8 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                             }
                         } else {
                             //OI中和物理库中都存在此表，比对字段是否相互存在
-                            Field existOIField = null;
                             for (Field dbField : dbFields) {
+                                Field existOIField = null;
                                 for (Field oiField : existOiView.getFields()) {
                                     if (oiField.getFieldName().equalsIgnoreCase(dbField.getFieldName())) {
                                         existOIField = oiField;
