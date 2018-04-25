@@ -112,6 +112,9 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
             for (Field field : fields) {
                 if (StringUtil.isValid(field.getGroup()) && field.getGroup().equalsIgnoreCase(RestApiFieldGroupType.Get.getType())) {
                     try {
+                        if(!queryStringBuilder.toString().endsWith("?")&&!queryStringBuilder.toString().endsWith("&")){
+                            queryStringBuilder.append("&");
+                        }
                         queryStringBuilder.append(field.getFieldName()).append("=").append(URLEncoder.encode(field.getFieldValue(), "UTF8"));
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
