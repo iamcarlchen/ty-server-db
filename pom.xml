@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>greatbee</groupId>
     <artifactId>ty-server-db</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
     <name>ty-server-db</name>
     <packaging>jar</packaging>
     <build>
@@ -57,13 +57,13 @@
         <dependency>
             <groupId>greatbee</groupId>
             <artifactId>ty-server-base</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
         </dependency>
         <!-- TY Lego API-->
         <dependency>
             <groupId>greatbee</groupId>
             <artifactId>ty-lego-api</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.6</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
