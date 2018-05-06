@@ -88,14 +88,15 @@ public interface ExceptionCode {
     //字段验证相关异常以4开头
     public static final long ERROR_FIELD_VALIDATE_PARAMS_INVALID = 400001;
     public static final long ERROR_FIELD_VALIDATE_REQUIRED = 400002;
-    public static final long ERROR_FIELD_VALIDATE_NOT_DATE_TYPE = 400002;
-    public static final long ERROR_FIELD_VALIDATE_NOT_NUMBER = 400002;
-    public static final long ERROR_FIELD_VALIDATE_NOT_INTEGER = 400002;
-    public static final long ERROR_FIELD_VALIDATE_OVER_LENGTH = 400002;
-    public static final long ERROR_FIELD_VALIDATE_OVER_VALUE = 400002;
-    public static final long ERROR_FIELD_VALIDATE_MD5_ERROR = 400002;
-    public static final long ERROR_FIELD_VALIDATE_VALUE_INVALID = 400002;
-    public static final long ERROR_FIELD_VALIDATE_DATE_TRANSFER = 400002;
+    public static final long ERROR_FIELD_VALIDATE_NOT_DATE_TYPE = 400003;
+    public static final long ERROR_FIELD_VALIDATE_NOT_NUMBER = 400004;
+    public static final long ERROR_FIELD_VALIDATE_NOT_INTEGER = 400005;
+    public static final long ERROR_FIELD_VALIDATE_OVER_LENGTH = 400006;
+    public static final long ERROR_FIELD_VALIDATE_OVER_VALUE = 400007;
+    public static final long ERROR_FIELD_VALIDATE_MD5_ERROR = 400008;
+    public static final long ERROR_FIELD_VALIDATE_VALUE_INVALID = 400009;
+    public static final long ERROR_FIELD_VALIDATE_DATE_TRANSFER = 400010;
+    public static final long ERROR_FIELD_VALIDATE_BOOLEAN_CHECK = 400011;
 
     //字段格式化相关异常以5开头
     public static final long ERROR_FIELD_HANDLE_VALUE_IS_NULL = 500001;
