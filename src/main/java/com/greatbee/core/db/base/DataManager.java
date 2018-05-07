@@ -12,18 +12,22 @@ import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.Condition;
 import com.greatbee.core.bean.view.ConnectorTree;
 import com.greatbee.core.bean.view.DSView;
-import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.db.RelationalDataManager;
 import com.greatbee.core.handler.DataHandler;
 import com.greatbee.core.handler.QueryHandler;
-import com.greatbee.core.util.DataSourceUtils;
 import com.greatbee.core.util.BuildUtils;
+import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL Server Data Manager
@@ -207,9 +211,16 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
             try {
                 conn = _ds.getConnection();
                 result = this.executeCreateQuery(oi, fields, conn, ps);
+                conn.commit();
             } catch (SQLException e) {
                 e.printStackTrace();
-                throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+                try {
+                    conn.rollback();
+                    throw new DBException("数据库事务执行失败,回滚成功", ERROR_DB_TRANSACTION_ERROR);
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                    throw new DBException("数据库事务执行失败,回滚失败", ERROR_DB_TRANSACTION_ERROR);
+                }
             } finally {
                 this.releaseResultSet(rs);
                 this.releasePreparedStatement(ps);

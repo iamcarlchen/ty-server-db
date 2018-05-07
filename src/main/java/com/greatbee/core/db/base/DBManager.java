@@ -4,24 +4,17 @@ import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
 import com.greatbee.base.bean.DataPage;
-import com.greatbee.base.util.DataUtil;
-import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
 import com.greatbee.core.bean.constant.DT;
-import com.greatbee.core.bean.oi.Field;
-import com.greatbee.core.manager.DSManager;
 import com.greatbee.core.handler.DataHandler;
 import com.greatbee.core.handler.QueryHandler;
-import com.greatbee.core.util.DataSourceUtils;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * SQL Server Data Manager
@@ -161,9 +154,16 @@ public abstract class DBManager extends BaseTYJDBCTemplate implements ExceptionC
             if (ps != null) {
                 ps.executeUpdate();
             }
+            conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new DBException(e.getMessage(), ERROR_DB_SQL_EXCEPTION);
+            try {
+                conn.rollback();
+                throw new DBException("数据库事务执行失败,回滚成功", ERROR_DB_TRANSACTION_ERROR);
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                throw new DBException("数据库事务执行失败,回滚失败", ERROR_DB_TRANSACTION_ERROR);
+            }
         } finally {
             this.releasePreparedStatement(ps);
             this.releaseConnection(conn);
