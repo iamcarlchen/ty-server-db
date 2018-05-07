@@ -210,6 +210,10 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
             String result;
             try {
                 conn = _ds.getConnection();
+                /**
+                 * 禁止自动提交
+                 */
+                conn.setAutoCommit(false);
                 result = this.executeCreateQuery(oi, fields, conn, ps);
                 conn.commit();
             } catch (SQLException e) {

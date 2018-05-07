@@ -150,6 +150,10 @@ public abstract class DBManager extends BaseTYJDBCTemplate implements ExceptionC
 
         try {
             conn = this.getConnection(dataSourceAlias);
+            /**
+             * 禁止自动提交
+             */
+            conn.setAutoCommit(false);
             ps = handler.execute(conn, ps);
             if (ps != null) {
                 ps.executeUpdate();
