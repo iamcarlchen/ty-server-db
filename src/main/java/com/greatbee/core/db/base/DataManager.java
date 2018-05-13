@@ -220,10 +220,10 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
                 e.printStackTrace();
                 try {
                     conn.rollback();
-                    throw new DBException("数据库事务执行失败,回滚成功", ERROR_DB_TRANSACTION_ERROR);
+                    throw new DBException("数据库事务执行失败,回滚成功."+e.getMessage(), ERROR_DB_TRANSACTION_ERROR);
                 } catch (SQLException e1) {
                     e1.printStackTrace();
-                    throw new DBException("数据库事务执行失败,回滚失败", ERROR_DB_TRANSACTION_ERROR);
+                    throw new DBException("数据库事务执行失败,回滚失败."+e.getMessage(), ERROR_DB_TRANSACTION_ERROR);
                 }
             } finally {
                 this.releaseResultSet(rs);
