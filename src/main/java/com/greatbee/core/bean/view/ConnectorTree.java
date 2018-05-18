@@ -1,12 +1,13 @@
 package com.greatbee.core.bean.view;
 
-import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.RandomGUIDUtil;
 import com.greatbee.core.bean.constant.ConT;
-import com.greatbee.core.bean.oi.*;
+import com.greatbee.core.bean.oi.Connector;
+import com.greatbee.core.bean.oi.Field;
+import com.greatbee.core.bean.oi.OI;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,13 +66,13 @@ public class ConnectorTree {
     }
 
     /**
-     * Add Field
+     * Add Field,excel 导出，需要添加的查询字段有序 hashMap 换成 LinkedHashMap
      *
      * @param field field
      */
     public void addField(String alias, Field field) {
         if (fields == null) {
-            fields = new HashMap<String, Field>();
+            fields = new LinkedHashMap<String, Field>();
         }
         fields.put(alias, field);
     }
