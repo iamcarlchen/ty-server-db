@@ -24,10 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL Server Data Manager
@@ -78,7 +75,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
     public DataList list(ConnectorTree connectorTree) throws DBException {
         if (connectorTree != null && connectorTree.getOi() != null) {
             OI oi = connectorTree.getOi();
-            HashMap map = new HashMap();
+            HashMap map = new LinkedHashMap<>();
             BuildUtils.buildAllFields(connectorTree, map);
 
             return this.executeListQuery(oi.getDsAlias(), new QueryHandler() {
