@@ -131,6 +131,9 @@ public class DataSourceUtils {
             //最大空闲连接
             _ds.setMaxIdle(maxIdle);
 
+            //增加链接池 拦截器 ,可以提高性能；
+            // StatementFinalizer: 跟踪所有使用 createStatement、prepareStatement 或 prepareCall 的语句，当连接返回池后，关闭这些语句。
+            _ds.setJdbcInterceptors("ConnectionState;StatementFinalizer;StatementDecoratorInterceptor;ResetAbandonedTimer;SlowQueryReport(threshold=100);SlowQueryReportJmx(notifyPool=false)");
 
             //超时等待时间毫秒
 //            _ds.setMaxWaitMillis(3*10000);
