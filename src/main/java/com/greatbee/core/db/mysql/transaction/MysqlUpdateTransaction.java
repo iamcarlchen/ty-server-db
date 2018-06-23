@@ -1,11 +1,12 @@
 package com.greatbee.core.db.mysql.transaction;
 
 import com.greatbee.base.bean.DBException;
+import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.core.bean.constant.DBTT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
-import com.greatbee.core.db.base.BaseTransactionTemplate;
 import com.greatbee.core.bean.view.Condition;
+import com.greatbee.core.db.base.BaseTransactionTemplate;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -60,7 +61,7 @@ public class MysqlUpdateTransaction extends BaseTransactionTemplate {
             sql.append("`").append(field.getFieldName()).append("`=? ");
             _checkFieldLengthOverLimit(field);
         }
-        if (condition != null) {
+        if (condition!=null&&(condition.getConditionFieldName()!=null || CollectionUtil.isValid(condition.getConditions()))) {
             sql.append(" WHERE ");
             Condition.buildConditionSql(sql, condition);
         }
