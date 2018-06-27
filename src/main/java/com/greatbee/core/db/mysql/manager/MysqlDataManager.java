@@ -634,7 +634,7 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
         OIUtils.isValid(oi);
         //读取之前schema
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getResource());
         OIUtils.isViewValid(oiView);
         //判断字段名称是否重复
         if (OIUtils.hasViewField(oiView, field.getFieldName())) {
@@ -653,14 +653,14 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
         OIUtils.isValid(oi);
         //读取之前schema
         DS ds = dsManager.getDSByAlias(oi.getDsAlias());
-        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getAlias());
+        OIView oiView = MysqlSchemaUtil.dumpTable(ds, oi.getResource());
         OIUtils.isViewValid(oiView);
         //判断字段名称是否存在
         if (!OIUtils.hasViewField(oiView, field.getFieldName())) {
             throw new DBException("字段不存在", ExceptionCode.ERROR_DB_FIELD_NOT_EXIST);
         }
         //删除字段
-        MysqlSchemaUtil.dropTableField(ds, oi.getAlias(), field.getFieldName());
+        MysqlSchemaUtil.dropTableField(ds, oi.getResource(), field.getFieldName());
     }
 
     /**
