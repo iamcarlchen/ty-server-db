@@ -532,8 +532,9 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                                         || !oiField.getDt().equalsIgnoreCase(existDBField.getDt())) {
                                     //字段长度或类型不一样的时候
                                     //生成diff元件
-                                    diffItemList.add(new DiffItem("5",oiView.getOi().getAlias(), oiView.getOi().getResource(),
-                                            oiField.getFieldName(), existDBField, oiField));
+                                    //TODO 暂时注释掉，逻辑是对的，但是oi和db中有太多长度不一致的地方，注释掉，先不考虑有长度不同的情况
+//                                    diffItemList.add(new DiffItem("5",oiView.getOi().getAlias(), oiView.getOi().getResource(),
+//                                            oiField.getFieldName(), existDBField, oiField));
                                 }
                             }
                         }
