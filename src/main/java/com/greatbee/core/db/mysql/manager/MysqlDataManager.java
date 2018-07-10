@@ -527,7 +527,8 @@ public class MysqlDataManager extends DataManager implements RelationalDataManag
                                 //表和字段都存在，比对属性
                                 // oiField
                                 // existDBField
-                                if (oiField.getFieldLength() != existDBField.getFieldLength()
+
+                                if (!oiField.getFieldLength().equals(existDBField.getFieldLength())
                                         || !oiField.getDt().equalsIgnoreCase(existDBField.getDt())) {
                                     //字段长度或类型不一样的时候
                                     //生成diff元件
