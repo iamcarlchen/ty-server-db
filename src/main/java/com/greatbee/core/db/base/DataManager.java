@@ -1,6 +1,5 @@
 package com.greatbee.core.db.base;
 
-import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.bean.Data;
 import com.greatbee.base.bean.DataList;
@@ -90,7 +89,7 @@ public abstract class DataManager extends DBManager implements RelationalDataMan
 //                    Data data = new Data();
                     while (iterator.hasNext()) {
                         Map.Entry entry = (Map.Entry) iterator.next();
-                        logger.info("entry=" + JSONObject.toJSONString(entry));
+                        //logger.info("entry=" + JSONObject.toJSONString(entry));
                         buildingDataObject(rs, entry, data);
                     }
 //                    return data;
