@@ -1,21 +1,21 @@
 package com.greatbee.core.lego;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
+import com.greatbee.core.bean.constant.DT;
 import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.server.InputField;
 import com.greatbee.core.db.SchemaDataManager;
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component("schemaExecute")
 public class SchemaExecute implements Lego, ExceptionCode {
@@ -116,10 +116,24 @@ public class SchemaExecute implements Lego, ExceptionCode {
         if (createOIFieldsArray == null || createOIFieldsArray.size() < 1) {
             throw new LegoException("JSON字段缺失", ERROR_LEGO_SCHEMA_EXECUTE_ERROR);
         }
+        boolean hasPk = false;
         for (int i = 0; i < createOIFieldsArray.size(); i++) {
-            createOIFields.add(createOIFieldsArray.getJSONObject(i).toJavaObject(Field.class));
+            Field _field = createOIFieldsArray.getJSONObject(i).toJavaObject(Field.class);
+            createOIFields.add(_field);
+            if(_field.isPk()){
+                hasPk = true;
+            }
         }
-
+        if(!hasPk){
+            //没有主键的话 ，默认插入一个id主键
+            Field _pkField = new Field();
+            _pkField.setDt(DT.INT.getType());
+            _pkField.setFieldLength(11);
+            _pkField.setFieldName("id");
+            _pkField.setOiAlias(createOI.getAlias());
+            _pkField.setPk(true);
+            createOIFields.add(0,_pkField);
+        }
         try {
             this.mysqlDataManager.createTable(createOI, createOIFields);
         } catch (DBException e) {

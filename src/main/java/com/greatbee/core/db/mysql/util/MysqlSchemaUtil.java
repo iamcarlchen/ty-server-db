@@ -1,14 +1,5 @@
 package com.greatbee.core.db.mysql.util;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.core.ExceptionCode;
@@ -18,6 +9,10 @@ import com.greatbee.core.bean.oi.Field;
 import com.greatbee.core.bean.oi.OI;
 import com.greatbee.core.bean.view.OIView;
 import com.greatbee.core.util.DataSourceUtils;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by usagizhang on 18/1/22.
@@ -148,7 +143,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
         if (isTableExits(ds, tableName)) {
             StringBuilder dropSQL = new StringBuilder();
             dropSQL.append("DROP TABLE ");
-            dropSQL.append(tableName);
+            dropSQL.append("`").append(tableName).append("`");
             _executeQuery(ds, dropSQL.toString());
         } else {
             throw new DBException("表不存在", ERROR_DB_TABLE_NOT_EXIST);
@@ -166,7 +161,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
         //TODO:构建sql
         // alter table table1 add transactor varchar(10) not Null;
         // alter table   table1 add id int unsigned not Null auto_increment primary key
-        queryBuilder.append("alter table ").append(tableName).append(" add `").append(field.getFieldName()).append("` ")
+        queryBuilder.append("alter table `").append(tableName).append("` add `").append(field.getFieldName()).append("` ")
                 .append(_getFieldSQLType(field.getDt(), field.getFieldLength()));
         if (field.isPk()) {
             //主键的情况
@@ -222,7 +217,7 @@ public class MysqlSchemaUtil implements ExceptionCode {
      */
     public static void dropTableField(DS ds, String tableName, String fieldName) throws DBException {
         StringBuilder dropSQL = new StringBuilder();
-        dropSQL.append("alter table ").append(tableName).append(" drop column ").append(fieldName).append(";");
+        dropSQL.append("alter table `").append(tableName).append("` drop column `").append(fieldName).append("`;");
         _executeQuery(ds, dropSQL.toString());
     }
 
