@@ -1,37 +1,31 @@
 package com.greatbee.core.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.util.ArrayUtil;
 import com.greatbee.base.util.Charset;
 import com.greatbee.base.util.CollectionUtil;
 import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.ExceptionCode;
-
-import com.greatbee.core.bean.view.*;
-import org.apache.commons.httpclient.*;
+import com.greatbee.core.bean.view.RestApiResponse;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.DateUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-
-//import com.sun.deploy.net.HttpResponse;
-import org.apache.commons.io.IOUtils;
-//import org.springframework.http.HttpEntity;
-
 import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.*;
@@ -39,9 +33,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 
+//import com.sun.deploy.net.HttpResponse;
+//import org.springframework.http.HttpEntity;
+
 /**
  * NVWA HTTP
- * <p/>
+ * <p>
  * Created by lufaxdev on 2014/11/25.
  */
 public class HttpClientUtil implements ExceptionCode {
@@ -124,6 +121,68 @@ public class HttpClientUtil implements ExceptionCode {
     public static RestApiResponse post(String url, Map<String, String> params) {
         return post(url, params, null);
     }
+
+    public static void main(String[] args) {
+        Map map = new HashMap<>();
+        map.put("name","测试");
+        map.put("age", "20");
+
+        Map head = new HashMap<>();
+        head.put("x-xiaoyi-date","2018-09-06 19:16:00");
+        post("http://local.dev.rs.com:8080/config/test",map,head);
+    }
+
+
+    /**
+     * multipart/form-data 方式提交
+     *
+     * @param url
+     * @param params
+     * @param headerParams
+     * @return
+     */
+    public static RestApiResponse multipartPost(String url, Map<String, String> params, Map<String, String> headerParams) {
+        System.out.println(url);
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        // httpClint的请求等待超时时间设定5秒
+        HttpPost httpost = new HttpPost(url);
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        Set<String> keySet = params.keySet();
+        ContentType contentType = ContentType.create(HTTP.PLAIN_TEXT_TYPE, HTTP.UTF_8);
+        for (String key : keySet) {
+            builder.addTextBody(key, params.get(key), contentType);
+        }
+        HttpEntity reqEntity = builder.build();
+        httpost.setEntity(reqEntity);
+
+        if (CollectionUtil.isValid(headerParams)) {
+            //设置header参数
+            Set<String> headerKeySet = headerParams.keySet();
+            for (String key : headerKeySet) {
+                httpost.setHeader(key, headerParams.get(key));
+            }
+        }
+
+        RestApiResponse restApiResponse = null;
+        try {
+            CloseableHttpResponse response = httpClient.execute(httpost);
+            HttpEntity responseEntity = response.getEntity();
+            String sResponse=EntityUtils.toString(responseEntity, "UTF-8");
+            System.out.println("Post 返回结果" + sResponse);
+            restApiResponse = new RestApiResponse(sResponse);
+            Header[] headers = response.getAllHeaders();
+            if (ArrayUtil.isValid(headers)) {
+                for (Header item : headers) {
+                    restApiResponse.addHeader(item.getName(), item.getValue());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return restApiResponse;
+    }
+
 
     /**
      * POST

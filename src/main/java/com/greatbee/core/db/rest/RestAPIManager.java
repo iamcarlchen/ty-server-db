@@ -58,9 +58,12 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
             data = HttpClientUtil.get(_setReuqetPathParm(requestURLBuilder, fields), _buildingHeaderBody(fields));
         } else if (method.equalsIgnoreCase(METHOD_TYPE_POST)) {
             //get请求
-            data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields));
+            if(_checkHeaderContentType(fields)){
+                data = HttpClientUtil.multipartPost(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields));
+            }else{
+                data = HttpClientUtil.post(_setReuqetPathParm(requestURLBuilder, fields), _buildingPostBody(fields), _buildingHeaderBody(fields));
+            }
         }
-
         return data;
     }
 
@@ -162,6 +165,26 @@ public class RestAPIManager implements UnstructuredDataManager, ExceptionCode {
             }
         }
         return requestBody;
+    }
+
+    /**
+     * 是否multipart/fomr-data 方式请求
+     *
+     * @param fields
+     * @return
+     */
+    private boolean _checkHeaderContentType(List<Field> fields) {
+        boolean multipart = false;
+        if (CollectionUtil.isValid(fields)) {
+            for (Field field : fields) {
+                if (StringUtil.isValid(field.getGroup()) && field.getGroup().equalsIgnoreCase(RestApiFieldGroupType.Header.getType())
+                        && StringUtil.equalsIgnoreCase(field.getFieldName(), "content-type")
+                        && field.getFieldValue().startsWith("multipart/form-data")) {
+                    multipart = true;
+                }
+            }
+        }
+        return multipart;
     }
 
     /**
