@@ -110,7 +110,6 @@ public class BaseTYJDBCTemplate implements ExceptionCode {
         return _ds.getConnection();
     }
 
-
     /**
      * 释放ps对象
      *

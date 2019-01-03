@@ -8,13 +8,14 @@
             <generator class="identity"/>
         </id>
         <property name="name" column="`name`" type="string"/>
-        <property name="description" column="description" type="string"/>
+        <property name="description" column="`description`" type="string"/>
         <property name="alias" column="alias" type="string"/>
         <property name="dst" column="dst" type="string"/>
-        <property name="connectionUrl" column="connectionUrl" type="string"/>
-        <property name="connectionUsername" column="connectionUsername" type="string"/>
-        <property name="connectionPassword" column="connectionPassword" type="string"/>
-        <property name="dsConfigFrom" column="dsConfigFrom" type="string"/>
+        <property name="connectionUrl" column="`connection_url`" type="string"/>
+        <property name="connectionUsername" column="`connection_username`" type="string"/>
+        <property name="connectionPassword" column="`connection_password`" type="string"/>
+        <property name="dsConfigFrom" column="`ds_config_from`" type="string"/>
+        <property name="tddlAppName" column="`tddl_appname`" type="string"/>
     </class>
 
     <!-- OI-->
@@ -26,7 +27,7 @@
         <property name="description" column="description" type="string"/>
         <property name="alias" column="alias" type="string"/>
         <property name="resource" column="resource" type="string"/>
-        <property name="dsAlias" column="dsAlias" type="string"/>
+        <property name="dsAlias" column="`ds_alias`" type="string"/>
     </class>
 
     <!-- Field-->
@@ -36,15 +37,15 @@
         </id>
         <property name="name" column="`name`" type="string"/>
         <property name="description" column="description" type="string"/>
-        <property name="fieldName" column="fieldName" type="string"/>
-        <property name="oiAlias" column="oiAlias" type="string"/>
+        <property name="fieldName" column="`field_name`" type="string"/>
+        <property name="oiAlias" column="`oi_alias`" type="string"/>
         <property name="dt" column="dt" type="string"/>
-        <property name="parentFieldId" column="parentFieldId" type="integer"/>
+        <property name="parentFieldId" column="`parent_field_id`" type="integer"/>
         <!--private List<Field> fields;-->
         <property name="pk" column="pk" type="boolean"/>
-        <property name="fieldValue" column="fieldValue" type="string"/>
-        <property name="fieldLength" column="fieldLength" type="integer"/>
-        <property name="group" column="`group`" type="string"/>
+        <property name="fieldValue" column="`field_value`" type="string"/>
+        <property name="fieldLength" column="`field_length`" type="integer"/>
+        <property name="group" column="`f_group`" type="string"/>
         <property name="uuid" column="`uuid`" type="string"/>
     </class>
 
@@ -56,9 +57,9 @@
         <property name="name" column="`name`" type="string"/>
         <property name="description" column="description" type="string"/>
         <property name="alias" column="alias" type="string"/>
-        <property name="fromOIAlias" column="fromOIAlias" type="string"/>
-        <property name="fromFieldName" column="fromFieldName" type="string"/>
-        <property name="toOIAlias" column="toOIAlias" type="string"/>
-        <property name="toFieldName" column="toFieldName" type="string"/>
+        <property name="fromOIAlias" column="`from_oi_alias`" type="string"/>
+        <property name="fromFieldName" column="`from_field_name`" type="string"/>
+        <property name="toOIAlias" column="`to_oi_alias`" type="string"/>
+        <property name="toFieldName" column="`to_field_name`" type="string"/>
     </class>
 </hibernate-mapping>

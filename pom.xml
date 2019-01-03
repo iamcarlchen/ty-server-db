@@ -3,14 +3,13 @@
     xmlns="http://maven.apache.org/POM/4.0.0" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>greatbee</groupId>
-    <artifactId>ty-server-db</artifactId>
-    <version>1.2.20</version>
-    <name>ty-server-db</name>
+    <groupId>com.cainiao.mokelay</groupId>
+    <artifactId>mokelay-server-db</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+    <name>mokelay-server-db</name>
     <packaging>jar</packaging>
     <build>
         <plugins>
-            <!-- <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -35,44 +34,47 @@
             </plugin>
         </plugins>
     </build>
-    <!--<distributionManagement>-->
-        <!--<repository>-->
-            <!--<id>releases</id>-->
-            <!--<name>Nexus Release Repository</name>-->
-            <!--<url>http://nexus.corp.rs.com/nexus/content/repositories/releases/</url>-->
-        <!--</repository>-->
-        <!--<snapshotRepository>-->
-            <!--<id>snapshots</id>-->
-            <!--<name>Nexus Snapshot Repository</name>-->
-            <!--<url>http://nexus.corp.rs.com/nexus/content/repositories/snapshots/</url>-->
-        <!--</snapshotRepository>-->
-    <!--</distributionManagement>-->
+
     <distributionManagement>
         <repository>
-            <id>releases-ty</id>
-            <name>Nexus TY</name>
-            <url>http://nexus.greatbee.com/repository/maven-releases/
-            </url>
+            <id>releases</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/releases</url>
         </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
+
+    <!--<distributionManagement>-->
+        <!--<repository>-->
+            <!--<id>releases-ty</id>-->
+            <!--<name>Nexus TY</name>-->
+            <!--<url>http://nexus.greatbee.com/repository/maven-releases/-->
+            <!--</url>-->
+        <!--</repository>-->
+    <!--</distributionManagement>-->
+
     <properties>
         <spring.version>4.2.0.RELEASE</spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <pandora-boot.version>2018-09-stable</pandora-boot.version>
     </properties>
-    <!-- <parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>1.2.5.RELEASE</version><relativePath/></parent> -->
+
     <dependencies>
         <!-- TY Server Base-->
         <dependency>
-            <groupId>greatbee</groupId>
-            <artifactId>ty-server-base</artifactId>
-            <version>1.0.7</version>
+            <groupId>com.cainiao.mokelay</groupId>
+            <artifactId>mokelay-base</artifactId>
+            <version>3.0.0-SNAPSHOT</version>
         </dependency>
         <!-- TY Lego API-->
         <dependency>
-            <groupId>greatbee</groupId>
-            <artifactId>ty-lego-api</artifactId>
-            <version>1.0.9</version>
+            <groupId>com.cainiao.mokelay</groupId>
+            <artifactId>mokelay-lego-api</artifactId>
+            <version>3.0.0-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -227,7 +229,7 @@
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc6</artifactId>
-            <version>11.2.0.4</version>
+            <version>12.1.0.1-atlassian-hosted</version>
         </dependency>
         <!-- sqlserver 6 -->
         <dependency>
@@ -268,6 +270,24 @@
             <artifactId>httpmime</artifactId>
             <version>4.5.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>pandora-tddl-spring-boot-starter</artifactId>
+            <version>${pandora-boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>pandora-tddl-spring-boot-autoconfigure</artifactId>
+            <version>${pandora-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>pandora-tddl-spring-boot-autoconfigure2</artifactId>
+            <version>${pandora-boot.version}</version>
+        </dependency>
+
 
     </dependencies>
 </project>

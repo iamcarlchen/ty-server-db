@@ -36,6 +36,9 @@ public class DS extends SimpleIND implements IND, AliasBean {
     //链接密码
     private String connectionPassword;
 
+    //TDDL 的appName
+    private String tddlAppName;
+
     public String getAlias() {
         return alias;
     }
@@ -82,5 +85,13 @@ public class DS extends SimpleIND implements IND, AliasBean {
 
     public void setDsConfigFrom(String dsConfigFrom) {
         this.dsConfigFrom = dsConfigFrom;
+    }
+
+    public String getTddlAppName() {
+        return tddlAppName;
+    }
+
+    public void setTddlAppName(String tddlAppName) {
+        this.tddlAppName = tddlAppName;
     }
 }
