@@ -109,6 +109,7 @@ public class SchemaDiff implements Lego, ExceptionCode {
             ds.setConnectionUrl(dsData.getString("connectionUrl"));
             ds.setId(dsData.getInt("id"));
             ds.setConnectionPassword(dsData.getString("connectionPassword"));
+            ds.setTddlAppName(dsData.getString("tddlAppname"));
         }
 
         //获取属性的内容
