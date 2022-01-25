@@ -1,16 +1,12 @@
 package com.greatbee.core.manager.jsonExt;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.greatbee.base.bean.DBException;
 import com.greatbee.base.manager.ext.AbstractBasicManager;
-import com.greatbee.base.util.CollectionUtil;
+import com.greatbee.base.util.Global;
 import com.greatbee.base.util.JSONUtil;
-import com.greatbee.core.bean.constant.JSONSchema;
+import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.oi.DS;
 import com.greatbee.core.manager.DSManager;
-
-import java.util.List;
 
 /**
  * Simple DS Manager
@@ -23,12 +19,22 @@ public class SimpleDSManager extends AbstractBasicManager implements DSManager {
     }
 
     @Override
-    public DS getDSByAlias(String alias) throws DBException {
-        JSONObject dsObj = JSONUtil.readJsonFile(JSONUtil.Model_Path, JSONSchema.Mokelay_DS_Alias);
-        if(dsObj==null){
-            return null;
+    public DS getDSByAlias(String alias) {
+        JSONObject dsObj = null;
+        String resolveMode = Global.getInstance().getMode();
+        if (StringUtil.isValid(resolveMode) && StringUtil.equals(resolveMode, "single_api_json")) {
+            dsObj = Global.getInstance().getDS(alias);
+        } else {
+            dsObj = JSONUtil.readJsonFile(JSONUtil.Model_Path, alias);
         }
-        return dsObj.toJavaObject(DS.class);
+        if (dsObj == null)
+            return null;
+        dsObj = JSONUtil.camelJsonName(dsObj, null);
+        return (DS)dsObj.toJavaObject(DS.class);
+    }
+
+    public int add(DS ds) {
+        return 0;
     }
 
 }

@@ -4,8 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.greatbee.base.bean.DBException;
 import com.greatbee.base.manager.ext.AbstractBasicManager;
-import com.greatbee.base.util.CollectionUtil;
+import com.greatbee.base.util.Global;
 import com.greatbee.base.util.JSONUtil;
+import com.greatbee.base.util.StringUtil;
 import com.greatbee.core.bean.constant.JSONSchema;
 import com.greatbee.core.bean.oi.Connector;
 import com.greatbee.core.manager.ConnectorManager;
@@ -40,48 +41,53 @@ public class SimpleConnectorManager  extends AbstractBasicManager implements Con
      * @throws DBException
      */
     @Override
-    public Connector getConnectorByAlias(String alias) throws DBException {
-        JSONObject dsObj = JSONUtil.readJsonFile(JSONUtil.Model_Path, JSONSchema.Mokelay_DS_Alias);
-        if(dsObj==null){
-            return null;
+    public Connector getConnectorByAlias(String alias) {
+        JSONObject dsObj = null;
+        String resolveMode = Global.getInstance().getMode();
+        if (StringUtil.isValid(resolveMode) && StringUtil.equals(resolveMode, "single_api_json")) {
+            dsObj = Global.getInstance().findDs("connector_alias", alias);
+        } else {
+            dsObj = JSONUtil.getRootObjByAlias("connector", alias);
         }
+        if (dsObj == null)
+            return null;
         JSONArray ois = dsObj.getJSONArray(JSONSchema.JSON_Field_OIS);
-        for(int i=0;i<ois.size();i++){
+        for (int i = 0; i < ois.size(); i++) {
             JSONObject oi = ois.getJSONObject(i);
-            if(!oi.containsKey(JSONSchema.JSON_Field_Connector)){
-                continue;
-            }
-            JSONArray connectors = oi.getJSONArray(JSONSchema.JSON_Field_Connector);
-            for(int j=0;j<connectors.size();j++){
-                JSONObject connector = connectors.getJSONObject(j);
-                if(connector.containsKey(JSONSchema.JSON_Field_Alias) && connector.getString(JSONSchema.JSON_Field_Alias).equals(alias)){
-                    //找到了对应alias的连接器
-                    return connector.toJavaObject(Connector.class);
+            if (oi.containsKey(JSONSchema.JSON_Field_Connectors)) {
+                JSONArray connectors = oi.getJSONArray(JSONSchema.JSON_Field_Connectors);
+                for (int j = 0; j < connectors.size(); j++) {
+                    JSONObject connector = connectors.getJSONObject(j);
+                    if (connector.containsKey(JSONSchema.JSON_Field_Alias) && connector.getString(JSONSchema.JSON_Field_Alias).equals(alias)) {
+                        connector = JSONUtil.camelJsonName(connector, null);
+                        return (Connector)connector.toJavaObject(Connector.class);
+                    }
                 }
             }
         }
         return null;
     }
 
-    @Override
     public List<Connector> getConnectorByFromOiAlias(String fromOiAlias) throws DBException {
         List<Connector> cs = new ArrayList<>();
-        JSONObject dsObj = JSONUtil.readJsonFile(JSONUtil.Model_Path, JSONSchema.Mokelay_DS_Alias);
-        if(dsObj==null){
-            return null;
+        JSONObject dsObj = null;
+        String resolveMode = Global.getInstance().getMode();
+        if (StringUtil.isValid(resolveMode) && StringUtil.equals(resolveMode, "single_api_json")) {
+            dsObj = Global.getInstance().findDs("connector_foi", fromOiAlias);
+        } else {
+            dsObj = JSONUtil.getRootObjByAlias("oi", fromOiAlias);
         }
+        if (dsObj == null)
+            return null;
         JSONArray ois = dsObj.getJSONArray(JSONSchema.JSON_Field_OIS);
-        for(int i=0;i<ois.size();i++){
+        for (int i = 0; i < ois.size(); i++) {
             JSONObject oi = ois.getJSONObject(i);
-            if(!oi.containsKey(JSONSchema.JSON_Field_Connector)){
-                continue;
-            }
-            JSONArray connectors = oi.getJSONArray(JSONSchema.JSON_Field_Connector);
-            for(int j=0;j<connectors.size();j++){
-                JSONObject connector = connectors.getJSONObject(j);
-                if(connector.containsKey(JSONSchema.JSON_Field_From_Oi_Alias) && connector.getString(JSONSchema.JSON_Field_From_Oi_Alias).equals(fromOiAlias)){
-                    //找到了对应alias的连接器
-                    cs.add(connector.toJavaObject(Connector.class));
+            if (oi.containsKey(JSONSchema.JSON_Field_Connector)) {
+                JSONArray connectors = oi.getJSONArray(JSONSchema.JSON_Field_Connector);
+                for (int j = 0; j < connectors.size(); j++) {
+                    JSONObject connector = connectors.getJSONObject(j);
+                    if (connector.containsKey(JSONSchema.JSON_Field_From_Oi_Alias) && connector.getString(JSONSchema.JSON_Field_From_Oi_Alias).equals(fromOiAlias))
+                        cs.add(connector.toJavaObject(Connector.class));
                 }
             }
         }

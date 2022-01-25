@@ -38,4 +38,17 @@
 
     <!-- Rest API Data Manager-->
     <bean id="restAPIManager" class="com.greatbee.core.db.rest.RestAPIManager"/>
+
+    <!-- DS Manager-->
+    <bean id="dsJsonManager" class="com.greatbee.core.manager.jsonExt.SimpleDSManager" parent="abstractBasicManager"/>
+
+    <!-- OI Manager-->
+    <bean id="oiJsonManager" class="com.greatbee.core.manager.jsonExt.SimpleOIManager" parent="abstractBasicManager"/>
+
+    <!-- Field Manager-->
+    <bean id="fieldJsonManager" class="com.greatbee.core.manager.jsonExt.SimpleFieldManager" parent="abstractBasicManager"/>
+
+    <!-- Connector Manager-->
+    <bean id="connectorJsonManager" class="com.greatbee.core.manager.jsonExt.SimpleConnectorManager"
+          parent="abstractBasicManager"/>
 </beans>
